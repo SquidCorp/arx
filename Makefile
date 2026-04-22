@@ -18,17 +18,25 @@ test:
 	go test ./... -race -count=1
 
 coverage:
-	@echo "🔍 Checking test coverage..."
-	go test ./internal/... -race -coverprofile=coverage.out -covermode=atomic >/dev/null 2>&1
-	@TOTAL=$$(go tool cover -func=coverage.out | grep total: | awk '{print $$3}' | sed 's/%//'); \
-	echo "📊 Coverage: $$TOTAL%"; \
+	@echo "🔍 Checking test coverage (excluding generated & mocks)..."
+	# Run tests and generate coverage
+	go test ./... -race -coverprofile=coverage.tmp -covermode=atomic >/dev/null 2>&1
+	
+	# Filter out unwanted files (add more patterns if needed)
+	cat coverage.tmp | \
+	  grep -v -E '(_mock\.go|_generated\.go|\.pb\.go|main\.go)$' > coverage.out || true
+	
+	# Calculate and check total coverage
+	@TOTAL=$$(go tool cover -func=coverage.out 2>/dev/null | grep total: | awk '{print $$3}' | sed 's/%//'); \
+	if [ -z "$$TOTAL" ]; then TOTAL=0; fi; \
+	echo "📊 Coverage: $$TOTAL% (excluding generated/mocks)"; \
 	if awk -v cov=$$TOTAL -v min=70 'BEGIN { if (cov < min) exit 1; else exit 0 }'; then \
 		echo "✅ Coverage OK (>=70%)"; \
 	else \
 		echo "❌ Coverage below 70% — add more tests!"; \
-		rm -f coverage.out; exit 1; \
+		rm -f coverage.tmp coverage.out; exit 1; \
 	fi; \
-	rm -f coverage.out
+	rm -f coverage.tmp
 
 vuln:
 	@echo "🔍 Checking for vulnerabilities..."
