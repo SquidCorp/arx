@@ -1,3 +1,4 @@
+// Package database manages PostgreSQL connection pooling.
 package database
 
 import (
@@ -7,8 +8,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// ParseConfig parses a database URL into a pgxpool configuration.
+func ParseConfig(databaseURL string) (*pgxpool.Config, error) {
+	return pgxpool.ParseConfig(databaseURL)
+}
+
+// Connect establishes a connection pool to the database and verifies connectivity.
 func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
-	config, err := pgxpool.ParseConfig(databaseURL)
+	config, err := ParseConfig(databaseURL)
 	if err != nil {
 		return nil, err
 	}

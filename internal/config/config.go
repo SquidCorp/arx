@@ -1,3 +1,4 @@
+// Package config loads application configuration from files and environment variables.
 package config
 
 import (
@@ -7,12 +8,14 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
+// Config holds the application configuration values.
 type Config struct {
 	Port        int    `koanf:"port"`
 	LogLevel    string `koanf:"log_level"`
 	DatabaseURL string `koanf:"database_url"`
 }
 
+// Load reads configuration from config.yaml and environment variables (APP_ prefix).
 func Load() (*Config, error) {
 	k := koanf.New(".")
 

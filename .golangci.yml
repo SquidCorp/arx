@@ -1,0 +1,23 @@
+version: 2
+run:
+  timeout: 5m
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+linters:
+  enable:
+    - govet
+    - ineffassign
+    - staticcheck
+    - revive
+    - unused
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        disabled: false
+        # This rule forces Godoc-style comments on every exported identifier
