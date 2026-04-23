@@ -1,6 +1,6 @@
 services:
   db:
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:pg17
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -15,6 +15,18 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   app:
     build:
       context: .
@@ -23,6 +35,7 @@ services:
       APP_PORT: "8080"
       APP_LOG_LEVEL: "debug"
       APP_DATABASE_URL: "postgres://postgres:postgres@db:5432/arx?sslmode=disable"
+      APP_REDIS_URL: "redis://redis:6379/0"
     ports:
       - "8080:8080"
     volumes:
@@ -30,6 +43,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   pgdata:
+  redisdata:

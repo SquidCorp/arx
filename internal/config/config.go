@@ -13,6 +13,7 @@ type Config struct {
 	Port        int    `koanf:"port"`
 	LogLevel    string `koanf:"log_level"`
 	DatabaseURL string `koanf:"database_url"`
+	RedisURL    string `koanf:"redis_url"`
 }
 
 // Load reads configuration from config.yaml and environment variables (APP_ prefix).
@@ -36,6 +37,7 @@ func Load() (*Config, error) {
 		Port:        8080,
 		LogLevel:    "info",
 		DatabaseURL: "postgres://postgres:postgres@localhost:5432/arx?sslmode=disable",
+		RedisURL:    "redis://localhost:6379/0",
 	}
 
 	if err := k.Unmarshal("", cfg); err != nil {

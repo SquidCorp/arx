@@ -1,29 +1,29 @@
 ## 1. Foundation & Infrastructure
 
-- [ ] 1.1 Add Redis to docker-compose.yaml and update config.yaml with Redis connection settings
-- [ ] 1.2 Create Postgres migration for `tenants` table with all columns (crypto keys, OAuth config, session policy)
-- [ ] 1.3 Create Postgres migration for `tools` table with unique constraint on (tenant_id, name)
-- [ ] 1.4 Create Postgres migration for `sessions` table with indexes on tenant/status, merchant_sid, and expires_at
-- [ ] 1.5 Create Postgres migration for `oauth_pending_flows` table with unique index on uuid
-- [ ] 1.6 Create Postgres migration for `audit_logs` partitioned table (by month on created_at) with indexes
-- [ ] 1.7 Create Postgres migration for `tenant_keys` table for key rotation history
+- [x] 1.1 Add Redis to docker-compose.yaml and update config.yaml with Redis connection settings
+- [x] 1.2 Create Postgres migration for `tenants` table with all columns (crypto keys, OAuth config, session policy)
+- [x] 1.3 Create Postgres migration for `tools` table with unique constraint on (tenant_id, name)
+- [x] 1.4 Create Postgres migration for `sessions` table with indexes on tenant/status, merchant_sid, and expires_at
+- [x] 1.5 Create Postgres migration for `oauth_pending_flows` table with unique index on uuid
+- [x] 1.6 Create Postgres migration for `audit_logs` partitioned table (by month on created_at) with indexes
+- [x] 1.7 Create Postgres migration for `tenant_keys` table for key rotation history
 
 ## 2. Crypto & Key Management
 
-- [ ] 2.1 Define `KeyManager` interface with `EncryptSessionData`, `DecryptSessionData`, `SignRequest`, `VerifyWebhook` methods
-- [ ] 2.2 Implement `LocalKeyManager` — loads master key from `ARX_MASTER_KEY` env var, fails on missing/invalid
-- [ ] 2.3 Implement per-tenant DEK generation (AES-256), encryption with master key, and storage
-- [ ] 2.4 Implement Ed25519 webhook signature verification (current key + grace period fallback to old key)
-- [ ] 2.5 Implement Ed25519 outbound request signing (decrypt signing key with DEK, sign payload, zero decrypted key)
-- [ ] 2.6 Implement key rotation logic — generate new keypair, set grace period on old key, record in tenant_keys
+- [x] 2.1 Define `KeyManager` interface with `EncryptSessionData`, `DecryptSessionData`, `SignRequest`, `VerifyWebhook` methods
+- [x] 2.2 Implement `LocalKeyManager` — loads master key from `ARX_MASTER_KEY` env var, fails on missing/invalid
+- [x] 2.3 Implement per-tenant DEK generation (AES-256), encryption with master key, and storage
+- [x] 2.4 Implement Ed25519 webhook signature verification (current key + grace period fallback to old key)
+- [x] 2.5 Implement Ed25519 outbound request signing (decrypt signing key with DEK, sign payload, zero decrypted key)
+- [x] 2.6 Implement key rotation logic — generate new keypair, set grace period on old key, record in tenant_keys
 
 ## 3. Redis Cache Layer
 
-- [ ] 3.1 Set up Redis client with connection pooling and circuit breaker for fallback to Postgres
-- [ ] 3.2 Implement session cache — HASH at `session:{id}` with TTL, write-through on create/update, read-through on miss
-- [ ] 3.3 Implement tool cache — HASH at `tool:{tenant}:{name}` and SET at `tenant:{tenant}:tools`, 5-min TTL
-- [ ] 3.4 Implement OAuth flow cache — HASH at `oauth:{uuid}`, 10-min TTL
-- [ ] 3.5 Implement nonce deduplication — `SET nonce:{tenant}:{nonce} NX EX 300` for webhook nonces and `nonce:dpop:{jti}` for DPoP nonces
+- [x] 3.1 Set up Redis client with connection pooling and circuit breaker for fallback to Postgres
+- [x] 3.2 Implement session cache — HASH at `session:{id}` with TTL, write-through on create/update, read-through on miss
+- [x] 3.3 Implement tool cache — HASH at `tool:{tenant}:{name}` and SET at `tenant:{tenant}:tools`, 5-min TTL
+- [x] 3.4 Implement OAuth flow cache — HASH at `oauth:{uuid}`, 10-min TTL
+- [x] 3.5 Implement nonce deduplication — `SET nonce:{tenant}:{nonce} NX EX 300` for webhook nonces and `nonce:dpop:{jti}` for DPoP nonces
 
 ## 4. Webhook Session Endpoints
 

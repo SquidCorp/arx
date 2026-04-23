@@ -1,3 +1,4 @@
 port: 8080
 log_level: debug
 database_url: postgres://postgres:postgres@localhost:5432/arx?sslmode=disable
+redis_url: redis://localhost:6379/0
