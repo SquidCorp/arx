@@ -1,14 +1,14 @@
 ## Context
 
-AgentGate is a greenfield Go service that acts as a secure reverse proxy between AI agents and merchant backends. The existing repo has a Go API scaffold with River workers and pgvector, plus Docker Compose with Postgres. Redis needs to be added.
+Arx is a greenfield Go service that acts as a secure reverse proxy between AI agents and merchant backends. The existing repo has a Go API scaffold with River workers and pgvector, plus Docker Compose with Postgres. Redis needs to be added.
 
-Merchants already handle user authentication via their own systems (Auth0, Clerk, Supabase, etc.). AgentGate never authenticates users — it receives signed session payloads from merchant backends and issues scoped, DPoP-bound tokens for agents to use.
+Merchants already handle user authentication via their own systems (Auth0, Clerk, Supabase, etc.). Arx never authenticates users — it receives signed session payloads from merchant backends and issues scoped, DPoP-bound tokens for agents to use.
 
 The system must handle two flows:
 1. **External LLM (Flow 1)**: Agent connects via MCP, OAuth 2.1 redirect to merchant login, webhook creates session, token returned via OAuth callback
 2. **In-App Agent (Flow 2)**: Merchant backend fires webhook directly, receives bind-code, agent exchanges bind-code for DPoP-bound token
 
-All agent tool calls are proxied through AgentGate, which enforces scopes, validates DPoP proofs, and logs everything before forwarding to the merchant's upstream endpoints.
+All agent tool calls are proxied through Arx, which enforces scopes, validates DPoP proofs, and logs everything before forwarding to the merchant's upstream endpoints.
 
 ## Goals / Non-Goals
 
@@ -19,7 +19,7 @@ All agent tool calls are proxied through AgentGate, which enforces scopes, valid
 - Immutable audit trail for every tool call and session event
 - Multi-tenant data isolation via per-tenant encryption
 - Standard tool catalog with structured constraint enforcement
-- Symmetric Ed25519 trust model (merchants sign to AgentGate, AgentGate signs to merchants)
+- Symmetric Ed25519 trust model (merchants sign to Arx, Arx signs to merchants)
 
 **Non-Goals:**
 - Prompt injection scanning (future, separate service)
@@ -33,7 +33,7 @@ All agent tool calls are proxied through AgentGate, which enforces scopes, valid
 
 ### D1: MCP meta-tool pattern over dynamic tools/list
 
-AgentGate exposes 4 static MCP tools (`list_tools`, `get_tool`, `call_tool`, `session_info`) rather than dynamically populating the MCP protocol-level `tools/list` per tenant.
+Arx exposes 4 static MCP tools (`list_tools`, `get_tool`, `call_tool`, `session_info`) rather than dynamically populating the MCP protocol-level `tools/list` per tenant.
 
 **Rationale**: One MCP server serves all tenants. Tenant-specific tools are discovered via `list_tools` (gated by token/scopes). This avoids per-tenant MCP endpoints, keeps the protocol surface stable, and works naturally with LLMs that handle "call a tool to discover more tools."
 
@@ -43,9 +43,9 @@ AgentGate exposes 4 static MCP tools (`list_tools`, `get_tool`, `call_tool`, `se
 
 ### D2: Streamable HTTP as sole MCP transport
 
-AgentGate only supports MCP over Streamable HTTP (POST + SSE). No stdio transport.
+Arx only supports MCP over Streamable HTTP (POST + SSE). No stdio transport.
 
-**Rationale**: AgentGate is a remote service — stdio would mean running it locally, defeating the purpose. DPoP requires HTTP headers. All major LLM platforms (ChatGPT, Claude) use Streamable HTTP for remote MCP.
+**Rationale**: Arx is a remote service — stdio would mean running it locally, defeating the purpose. DPoP requires HTTP headers. All major LLM platforms (ChatGPT, Claude) use Streamable HTTP for remote MCP.
 
 ### D3: Bind-code pattern for Flow 2 DPoP
 
@@ -69,9 +69,9 @@ Session data and tool configs cached in Redis for the enforcement hot path. Post
 
 ### D5: Ed25519 symmetric trust model
 
-Both directions use Ed25519 signatures over request payloads. Merchants sign webhooks to AgentGate; AgentGate signs proxied requests to merchants. Key exchange happens at tenant registration.
+Both directions use Ed25519 signatures over request payloads. Merchants sign webhooks to Arx; Arx signs proxied requests to merchants. Key exchange happens at tenant registration.
 
-**Rationale**: One cryptographic primitive, one mental model. Merchants implementing webhook signing already understand the pattern — verifying AgentGate's signatures is the same code in reverse. Ed25519 is fast, has small signatures, and is well-supported in Go's stdlib.
+**Rationale**: One cryptographic primitive, one mental model. Merchants implementing webhook signing already understand the pattern — verifying Arx's signatures is the same code in reverse. Ed25519 is fast, has small signatures, and is well-supported in Go's stdlib.
 
 **Alternatives considered**:
 - Shared API keys for outbound auth: Simpler but key leakage allows impersonation; no cryptographic non-repudiation
@@ -79,9 +79,9 @@ Both directions use Ed25519 signatures over request payloads. Merchants sign web
 
 ### D6: Standard tool catalog (Option A) with migration path
 
-AgentGate defines a catalog of standard tool types with known parameter schemas. Merchants pick from the catalog and provide field mappings to their upstream APIs. Constraint enforcement operates on the standard schema.
+Arx defines a catalog of standard tool types with known parameter schemas. Merchants pick from the catalog and provide field mappings to their upstream APIs. Constraint enforcement operates on the standard schema.
 
-**Rationale**: Simplest to implement — AgentGate knows exactly where every parameter lives because it defined the schema. Migration to Option B (merchant-defined schemas) later only requires letting merchants define custom tool types; the enforcement engine doesn't change.
+**Rationale**: Simplest to implement — Arx knows exactly where every parameter lives because it defined the schema. Migration to Option B (merchant-defined schemas) later only requires letting merchants define custom tool types; the enforcement engine doesn't change.
 
 ### D7: Per-tenant envelope encryption with local master key
 
@@ -105,7 +105,7 @@ External LLMs (Flow 1) use standard OAuth refresh_token grant. In-app agents (Fl
 
 SUSPENDED is a distinct state for security events (not just a flavor of REVOKED). Suspended sessions can be resumed by the merchant via `POST /webhook/session-resumed`.
 
-**Rationale**: Immediate revocation on a potential false positive is disruptive. SUSPENDED lets AgentGate flag suspicious activity while giving the merchant the final say. The agent gets `403 session_suspended` until the merchant acts.
+**Rationale**: Immediate revocation on a potential false positive is disruptive. SUSPENDED lets Arx flag suspicious activity while giving the merchant the final say. The agent gets `403 session_suspended` until the merchant acts.
 
 ## Risks / Trade-offs
 
@@ -119,7 +119,7 @@ SUSPENDED is a distinct state for security events (not just a flavor of REVOKED)
 
 **[Risk] OAuth pending flows could accumulate if merchants don't complete login** → Mitigation: Short TTL (5-10 min) on `oauth_pending_flows` rows. River cron job cleans up expired rows.
 
-**[Risk] Merchant upstream latency affects agent experience** → Mitigation: Configurable per-tool timeout. AgentGate adds <2ms overhead — the vast majority of latency is the merchant's upstream. Timeout and circuit breaker on outbound proxy calls.
+**[Risk] Merchant upstream latency affects agent experience** → Mitigation: Configurable per-tool timeout. Arx adds <2ms overhead — the vast majority of latency is the merchant's upstream. Timeout and circuit breaker on outbound proxy calls.
 
 **[Trade-off] Meta-tool pattern means LLMs make 2 calls minimum (list_tools → call_tool)** → Accepted: The extra round-trip is minimal (~1-2ms each) and provides scope-filtered discovery. LLMs handle this pattern well.
 

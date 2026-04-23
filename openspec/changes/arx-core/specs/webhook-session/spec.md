@@ -16,11 +16,11 @@ The system SHALL create authenticated sessions exclusively through `POST /webhoo
 - **THEN** the system SHALL reject the request with 401 and `"invalid_signature"`
 
 #### Scenario: Stale timestamp
-- **WHEN** the `X-AgentGate-Timestamp` header is older than 5 minutes
+- **WHEN** the `X-Arx-Timestamp` header is older than 5 minutes
 - **THEN** the system SHALL reject the request with 401 and `"stale_timestamp"`
 
 #### Scenario: Duplicate nonce
-- **WHEN** the `X-AgentGate-Nonce` header value has been seen before within the replay window
+- **WHEN** the `X-Arx-Nonce` header value has been seen before within the replay window
 - **THEN** the system SHALL reject the request with 401 and `"duplicate_nonce"`
 
 #### Scenario: expiresIn exceeds tenant max

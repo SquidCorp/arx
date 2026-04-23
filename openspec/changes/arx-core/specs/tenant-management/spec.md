@@ -1,11 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: Tenant registration
-The system SHALL support tenant creation via `POST /admin/v1/tenants` accepting tenant name, merchant public key, OAuth config, and session policy. The system SHALL generate a tenant ID, per-tenant encryption key, signing keypair, and return the tenant ID, AgentGate public key, and MCP endpoint URL.
+The system SHALL support tenant creation via `POST /admin/v1/tenants` accepting tenant name, merchant public key, OAuth config, and session policy. The system SHALL generate a tenant ID, per-tenant encryption key, signing keypair, and return the tenant ID, Arx public key, and MCP endpoint URL.
 
 #### Scenario: Successful tenant registration
 - **WHEN** an admin sends `POST /admin/v1/tenants` with valid configuration
-- **THEN** the system SHALL create the tenant, generate crypto material, and return `{ tenant_id, agentgate_public_key, mcp_endpoint_url }`
+- **THEN** the system SHALL create the tenant, generate crypto material, and return `{ tenant_id, arx_public_key, mcp_endpoint_url }`
 
 #### Scenario: Duplicate tenant name
 - **WHEN** a tenant with the same name already exists
@@ -56,7 +56,7 @@ The system SHALL expose `GET /admin/v1/tenants/:id/audit` with filters for sessi
 - **THEN** the system SHALL return paginated audit entries within the time range
 
 ### Requirement: Key rotation
-The system SHALL support rotating the AgentGate signing keypair for a tenant via `POST /admin/v1/tenants/:id/keys/rotate`. The old key SHALL remain valid for a configurable grace period (default 24 hours).
+The system SHALL support rotating the Arx signing keypair for a tenant via `POST /admin/v1/tenants/:id/keys/rotate`. The old key SHALL remain valid for a configurable grace period (default 24 hours).
 
 #### Scenario: Successful key rotation
 - **WHEN** an admin triggers key rotation for a tenant

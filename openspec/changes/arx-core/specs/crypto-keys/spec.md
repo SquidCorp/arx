@@ -19,14 +19,14 @@ Each tenant SHALL have a unique data encryption key (DEK) used for encrypting se
 - **THEN** the system SHALL encrypt the claims JSON with the tenant's DEK before storing in Postgres
 
 ### Requirement: Master key from environment
-In v1, the master key for encrypting DEKs SHALL be loaded from an environment variable (`AGENTGATE_MASTER_KEY`). The system SHALL refuse to start if this variable is missing or invalid.
+In v1, the master key for encrypting DEKs SHALL be loaded from an environment variable (`ARX_MASTER_KEY`). The system SHALL refuse to start if this variable is missing or invalid.
 
 #### Scenario: Missing master key
-- **WHEN** the system starts without `AGENTGATE_MASTER_KEY` set
+- **WHEN** the system starts without `ARX_MASTER_KEY` set
 - **THEN** the system SHALL fail to start with a clear error message
 
 #### Scenario: Master key loaded successfully
-- **WHEN** the system starts with a valid `AGENTGATE_MASTER_KEY`
+- **WHEN** the system starts with a valid `ARX_MASTER_KEY`
 - **THEN** the system SHALL initialize the LocalKeyManager and proceed with startup
 
 ### Requirement: Ed25519 webhook signature verification
@@ -45,16 +45,16 @@ The system SHALL verify Ed25519 signatures on all inbound merchant webhooks. The
 - **THEN** the system SHALL reject with 401 and `"invalid_signature"`
 
 ### Requirement: Ed25519 outbound request signing
-The system SHALL sign every outbound proxied request with the tenant's AgentGate signing key (Ed25519). The signing key SHALL be stored encrypted with the tenant's DEK.
+The system SHALL sign every outbound proxied request with the tenant's Arx signing key (Ed25519). The signing key SHALL be stored encrypted with the tenant's DEK.
 
 #### Scenario: Signing key decrypted for use
 - **WHEN** the system needs to sign an outbound request for tenant "acme"
 - **THEN** the system SHALL decrypt the signing private key using the tenant's DEK and the master key, sign the request, and not persist the decrypted key
 
 ### Requirement: Key rotation with grace period
-The system SHALL support rotating both merchant public keys and AgentGate signing keypairs. During rotation, the old key SHALL remain valid for a configurable grace period (default 24 hours). Key history SHALL be recorded in the tenant_keys table.
+The system SHALL support rotating both merchant public keys and Arx signing keypairs. During rotation, the old key SHALL remain valid for a configurable grace period (default 24 hours). Key history SHALL be recorded in the tenant_keys table.
 
-#### Scenario: AgentGate signing key rotation
+#### Scenario: Arx signing key rotation
 - **WHEN** an admin triggers signing key rotation for a tenant
 - **THEN** the system SHALL generate a new keypair, store the old key with an expiry timestamp, and begin signing with the new key immediately
 

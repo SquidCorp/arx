@@ -35,7 +35,7 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		Port:        8080,
 		LogLevel:    "info",
-		DatabaseURL: "postgres://postgres:postgres@localhost:5432/agentporter?sslmode=disable",
+		DatabaseURL: "postgres://postgres:postgres@localhost:5432/arx?sslmode=disable",
 	}
 
 	if err := k.Unmarshal("", cfg); err != nil {

@@ -1,4 +1,4 @@
-module github.com/fambr/agentporter
+module github.com/fambr/arx
 
 go 1.26.2
 

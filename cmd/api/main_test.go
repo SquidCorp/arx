@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/fambr/agentporter/internal/config"
+	"github.com/fambr/arx/internal/config"
 	"github.com/rs/zerolog"
 )
 

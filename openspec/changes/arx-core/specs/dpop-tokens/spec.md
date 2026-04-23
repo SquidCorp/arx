@@ -24,7 +24,7 @@ The system SHALL validate a DPoP proof JWT on every `call_tool` request. Validat
 - **THEN** the system SHALL reject with 401 and `"invalid_dpop_proof"`
 
 ### Requirement: DPoP-bound token issuance
-The system SHALL issue access tokens as JWTs with a `cnf.jkt` claim containing the SHA-256 thumbprint of the agent's public key. Tokens SHALL use `token_type: "DPoP"` and be signed with AgentGate's EdDSA key.
+The system SHALL issue access tokens as JWTs with a `cnf.jkt` claim containing the SHA-256 thumbprint of the agent's public key. Tokens SHALL use `token_type: "DPoP"` and be signed with Arx's EdDSA key.
 
 #### Scenario: Token issued during OAuth flow
 - **WHEN** an agent exchanges an authorization code at `POST /oauth/token` with a DPoP proof header
@@ -50,10 +50,10 @@ The system SHALL support a bind-code exchange at `POST /token/bind` where the ag
 - **THEN** the system SHALL reject with 400 and `"bind_code_already_used"`
 
 ### Requirement: Access token structure
-Access tokens SHALL be JWTs containing: `iss` (AgentGate URL), `sub` (session ID), `aud` ("agentgate"), `exp`, `iat`, `cnf.jkt` (DPoP thumbprint), `scope` (space-separated), and `tenant` (tenant ID).
+Access tokens SHALL be JWTs containing: `iss` (Arx URL), `sub` (session ID), `aud` ("arx"), `exp`, `iat`, `cnf.jkt` (DPoP thumbprint), `scope` (space-separated), and `tenant` (tenant ID).
 
 #### Scenario: Token contains required claims
-- **WHEN** AgentGate issues an access token
+- **WHEN** Arx issues an access token
 - **THEN** the token SHALL contain all required claims: `iss`, `sub`, `aud`, `exp`, `iat`, `cnf.jkt`, `scope`, `tenant`
 
 ### Requirement: Nonce deduplication via Redis

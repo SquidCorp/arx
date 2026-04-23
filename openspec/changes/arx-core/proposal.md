@@ -1,6 +1,6 @@
 ## Why
 
-AI agents (ChatGPT, Claude, Gemini, in-app assistants) need to call merchant backend tools (cart, checkout, orders) on behalf of authenticated users. Today, every merchant must build their own agent auth layer — handling token scoping, replay protection, and audit logging from scratch. AgentGate solves this by acting as a secure, vendor-agnostic authentication and authorization gateway that sits between agents and merchant backends, so that no agent ever reaches a merchant API directly.
+AI agents (ChatGPT, Claude, Gemini, in-app assistants) need to call merchant backend tools (cart, checkout, orders) on behalf of authenticated users. Today, every merchant must build their own agent auth layer — handling token scoping, replay protection, and audit logging from scratch. Arx solves this by acting as a secure, vendor-agnostic authentication and authorization gateway that sits between agents and merchant backends, so that no agent ever reaches a merchant API directly.
 
 ## What Changes
 

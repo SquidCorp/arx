@@ -11,7 +11,7 @@
 ## 2. Crypto & Key Management
 
 - [ ] 2.1 Define `KeyManager` interface with `EncryptSessionData`, `DecryptSessionData`, `SignRequest`, `VerifyWebhook` methods
-- [ ] 2.2 Implement `LocalKeyManager` — loads master key from `AGENTGATE_MASTER_KEY` env var, fails on missing/invalid
+- [ ] 2.2 Implement `LocalKeyManager` — loads master key from `ARX_MASTER_KEY` env var, fails on missing/invalid
 - [ ] 2.3 Implement per-tenant DEK generation (AES-256), encryption with master key, and storage
 - [ ] 2.4 Implement Ed25519 webhook signature verification (current key + grace period fallback to old key)
 - [ ] 2.5 Implement Ed25519 outbound request signing (decrypt signing key with DEK, sign payload, zero decrypted key)
@@ -75,8 +75,8 @@
 
 - [ ] 9.1 Implement parameter mapping engine — transform standard catalog params to merchant field paths (body.x, query.x)
 - [ ] 9.2 Implement outbound HTTP client with per-tool configurable timeout and circuit breaker
-- [ ] 9.3 Implement Ed25519 request signing on outbound proxied requests (X-AgentGate-Signature, X-AgentGate-Timestamp)
-- [ ] 9.4 Implement session context headers injection (X-AgentGate-Session, X-AgentGate-User, X-AgentGate-Scopes)
+- [ ] 9.3 Implement Ed25519 request signing on outbound proxied requests (X-Arx-Signature, X-Arx-Timestamp)
+- [ ] 9.4 Implement session context headers injection (X-Arx-Session, X-Arx-User, X-Arx-Scopes)
 - [ ] 9.5 Implement upstream response handling — forward 2xx/4xx responses, mask 5xx errors, handle timeouts
 
 ## 10. Audit Logging

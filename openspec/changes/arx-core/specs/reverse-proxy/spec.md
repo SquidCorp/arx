@@ -12,18 +12,18 @@ The system SHALL map standard tool catalog parameters to merchant-specific field
 - **THEN** the system SHALL drop unknown parameters and not forward them to the merchant
 
 ### Requirement: Ed25519 request signing on outbound proxy
-The system SHALL sign every outbound proxied request with the tenant's AgentGate signing key. The signature SHALL cover the HTTP method, path, body, and timestamp. The signature and timestamp SHALL be sent as `X-AgentGate-Signature` and `X-AgentGate-Timestamp` headers.
+The system SHALL sign every outbound proxied request with the tenant's Arx signing key. The signature SHALL cover the HTTP method, path, body, and timestamp. The signature and timestamp SHALL be sent as `X-Arx-Signature` and `X-Arx-Timestamp` headers.
 
 #### Scenario: Merchant can verify proxied request
-- **WHEN** AgentGate proxies a request to the merchant upstream
-- **THEN** the request SHALL include `X-AgentGate-Signature` and `X-AgentGate-Timestamp` headers, and the signature SHALL be verifiable with AgentGate's public key for that tenant
+- **WHEN** Arx proxies a request to the merchant upstream
+- **THEN** the request SHALL include `X-Arx-Signature` and `X-Arx-Timestamp` headers, and the signature SHALL be verifiable with Arx's public key for that tenant
 
 ### Requirement: Session context headers on proxied requests
-The system SHALL include session context headers on every proxied request: `X-AgentGate-Session` (session ID), `X-AgentGate-User` (user ID or "anonymous"), `X-AgentGate-Scopes` (comma-separated scopes).
+The system SHALL include session context headers on every proxied request: `X-Arx-Session` (session ID), `X-Arx-User` (user ID or "anonymous"), `X-Arx-Scopes` (comma-separated scopes).
 
 #### Scenario: Merchant receives session context
-- **WHEN** AgentGate proxies a tool call for user "user-123" with scopes `["cart:read", "cart:write"]`
-- **THEN** the proxied request SHALL include headers `X-AgentGate-Session: <session_id>`, `X-AgentGate-User: user-123`, `X-AgentGate-Scopes: cart:read,cart:write`
+- **WHEN** Arx proxies a tool call for user "user-123" with scopes `["cart:read", "cart:write"]`
+- **THEN** the proxied request SHALL include headers `X-Arx-Session: <session_id>`, `X-Arx-User: user-123`, `X-Arx-Scopes: cart:read,cart:write`
 
 ### Requirement: Upstream timeout and error handling
 The system SHALL enforce a configurable per-tool timeout on upstream requests. If the upstream times out or returns a 5xx error, the system SHALL return a structured error to the agent without exposing internal upstream details.
