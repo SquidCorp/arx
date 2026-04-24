@@ -1,0 +1,24 @@
+info:
+  name: "2.5 Missing sessionId"
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  body:
+    type: json
+    data: |-
+      {"scopes":["cart.view"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should return missing_session_id error", function() {
+          expect(res.body.error).to.equal("missing_session_id");
+        });

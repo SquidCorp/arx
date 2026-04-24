@@ -1,0 +1,7 @@
+info:
+  name: local
+
+vars:
+  baseUrl: "{{process.env.BASE_URL}}"
+  tenantId: "{{process.env.TENANT_ID}}"
+  merchantPrivateKey: "{{process.env.MERCHANT_PRIVATE_KEY}}"

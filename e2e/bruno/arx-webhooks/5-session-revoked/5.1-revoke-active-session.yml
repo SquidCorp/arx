@@ -1,0 +1,24 @@
+info:
+  name: "5.1 Revoke active session"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-revoked"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{revokeSessionId}}"}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return status: revoked", function() {
+          expect(res.body.status).to.equal("revoked");
+        });

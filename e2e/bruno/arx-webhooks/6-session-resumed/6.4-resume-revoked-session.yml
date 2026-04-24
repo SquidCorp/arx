@@ -1,0 +1,28 @@
+info:
+  name: "6.4 Resume revoked session"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-resumed"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{revokedSessionId}}"}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Requires a revoked session. Set via SQL or use one from a previous test.
+
+    - type: tests
+      code: |-
+        test("should return 409", function() {
+          expect(res.status).to.equal(409);
+        });
+
+        test("should return session_not_suspended error", function() {
+          expect(res.body.error).to.equal("session_not_suspended");
+        });

@@ -1,0 +1,23 @@
+info:
+  name: "7.3b Connect → Revoke → Refresh: revoke"
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-revoked"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{lc73SessionId}}"}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("7.3b should revoke", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.status).to.equal("revoked");
+        });
+
+        bru.setNextRequest("7.3c Connect → Revoke → Refresh: attempt refresh");

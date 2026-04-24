@@ -1,0 +1,29 @@
+info:
+  name: "2.4 ExpiresIn capped by tenant max (1h)"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"e2e-session-2.4","scopes":["cart.view"],"expiresIn":7200}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 201 Created", function() {
+          expect(res.status).to.equal(201);
+        });
+
+        test("should return sessionId and bindCode", function() {
+          expect(res.body).to.have.property("sessionId");
+          expect(res.body).to.have.property("bindCode");
+        });
+
+        // The session expiry in the DB should be capped at 1h.
+        // We can only verify via the response that the request succeeded;
+        // DB verification requires a separate check.

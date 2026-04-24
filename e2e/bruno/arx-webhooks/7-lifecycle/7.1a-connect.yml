@@ -1,0 +1,23 @@
+info:
+  name: "7.1a Connect → Refresh → Revoke: connect"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"e2e-lifecycle-7.1","scopes":["cart.view"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("7.1a should create session", function() {
+          expect(res.status).to.equal(201);
+        });
+
+        bru.setVar("lc71SessionId", res.body.sessionId);
+        bru.setNextRequest("7.1b Connect → Refresh → Revoke: refresh 1");

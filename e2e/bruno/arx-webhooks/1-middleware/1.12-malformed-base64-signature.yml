@@ -1,0 +1,44 @@
+info:
+  name: "1.12 Malformed base64 signature"
+  type: http
+  seq: 12
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: X-Arx-Tenant-ID
+      value: "{{tenantId}}"
+    - name: X-Arx-Signature
+      value: "!!!not-valid-base64!!!"
+    - name: X-Arx-Timestamp
+      value: "{{timestamp}}"
+    - name: X-Arx-Nonce
+      value: "{{nonce}}"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"mw-test-12","scopes":["cart.view"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const timestamp = Math.floor(Date.now() / 1000).toString();
+        const nonce = require('node:crypto').randomUUID();
+        bru.setVar('timestamp', timestamp);
+        bru.setVar('nonce', nonce);
+        req.setHeader('X-Arx-Timestamp', timestamp);
+        req.setHeader('X-Arx-Nonce', nonce);
+
+    - type: tests
+      code: |-
+        test("should return 401", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("should return invalid_signature_encoding error", function() {
+          expect(res.body.error).to.equal("invalid_signature_encoding");
+        });

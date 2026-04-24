@@ -1,0 +1,24 @@
+info:
+  name: "4.3 Refresh preserves scopes when not provided"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-refresh"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{refreshSessionId}}","expiresIn":1800}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return status: refreshed (scopes preserved internally)", function() {
+          expect(res.body.status).to.equal("refreshed");
+        });

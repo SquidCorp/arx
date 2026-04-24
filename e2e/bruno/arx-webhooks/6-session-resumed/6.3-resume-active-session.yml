@@ -1,0 +1,28 @@
+info:
+  name: "6.3 Resume active session"
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-resumed"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{resumeSessionId}}"}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // After 6.1, the session is active again. Resuming an active session should fail.
+
+    - type: tests
+      code: |-
+        test("should return 409", function() {
+          expect(res.status).to.equal(409);
+        });
+
+        test("should return session_not_suspended error", function() {
+          expect(res.body.error).to.equal("session_not_suspended");
+        });

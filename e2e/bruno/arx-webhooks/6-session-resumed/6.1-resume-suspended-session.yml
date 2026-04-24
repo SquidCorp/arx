@@ -1,0 +1,30 @@
+info:
+  name: "6.1 Resume suspended session"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-resumed"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{resumeSessionId}}"}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Requires the session from 6.0 to be in 'suspended' status.
+        // Run this SQL before executing:
+        //   UPDATE sessions SET status = 'suspended' WHERE id = '<resumeSessionId>';
+
+    - type: tests
+      code: |-
+        test("should return 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return status: active", function() {
+          expect(res.body.status).to.equal("active");
+        });

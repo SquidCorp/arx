@@ -1,0 +1,30 @@
+info:
+  name: "5.4 Revoke suspended session"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-revoked"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{suspendedForRevokeId}}"}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Requires a suspended session. Set via SQL before running:
+        //   UPDATE sessions SET status = 'suspended' WHERE id = '<session_id>';
+        // Or use the lifecycle tests which handle state transitions.
+
+    - type: tests
+      code: |-
+        test("should return 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return status: revoked", function() {
+          expect(res.body.status).to.equal("revoked");
+        });

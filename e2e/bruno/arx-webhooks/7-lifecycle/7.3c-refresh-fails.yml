@@ -1,0 +1,24 @@
+info:
+  name: "7.3c Connect → Revoke → Refresh: attempt refresh"
+  type: http
+  seq: 12
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-refresh"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{lc73SessionId}}","expiresIn":1800}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("7.3c refresh after revoke should return 409", function() {
+          expect(res.status).to.equal(409);
+        });
+
+        test("should return session_not_active error", function() {
+          expect(res.body.error).to.equal("session_not_active");
+        });

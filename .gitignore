@@ -30,6 +30,9 @@ go.work.sum
 # Air tmp
 tmp/
 
+# Bruno e2e reports
+e2e/bruno/*/reports/
+
 # Editor/IDE
 # .idea/
 # .vscode/

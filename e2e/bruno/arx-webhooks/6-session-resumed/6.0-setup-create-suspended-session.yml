@@ -1,0 +1,31 @@
+info:
+  name: "6.0 Setup — create and suspend a session for resume tests"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"e2e-resume-session","scopes":["cart.view"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        // Store the session ID, then manually suspend it via SQL.
+        // Run: UPDATE sessions SET status = 'suspended' WHERE id = '<id>';
+        if (res.status === 201) {
+          bru.setVar("resumeSessionId", res.body.sessionId);
+          console.log("Created session for resume tests:", res.body.sessionId);
+          console.log("ACTION REQUIRED: Suspend this session via SQL before running 6.1");
+          console.log("  UPDATE sessions SET status = 'suspended' WHERE id = '" + res.body.sessionId + "';");
+        }
+
+    - type: tests
+      code: |-
+        test("setup: should create session", function() {
+          expect(res.status).to.equal(201);
+        });

@@ -27,12 +27,12 @@
 
 ## 4. Webhook Session Endpoints
 
-- [ ] 4.1 Implement webhook signature validation middleware (Ed25519 sig, timestamp freshness ±5min, nonce uniqueness)
-- [ ] 4.2 Implement `POST /webhook/session-connected` — validate payload, create session, return bind_code (Flow 2) or status:pending (Flow 1)
-- [ ] 4.3 Implement `POST /webhook/session-refresh` — validate, check max_refreshes, update session, issue new token
-- [ ] 4.4 Implement `POST /webhook/session-revoked` — mark session REVOKED, invalidate Redis cache, idempotent on re-revoke
-- [ ] 4.5 Implement `POST /webhook/session-resumed` — mark SUSPENDED session as ACTIVE, reject if not suspended
-- [ ] 4.6 Implement session state machine enforcement (ACTIVE→EXPIRED/REVOKED/SUSPENDED, SUSPENDED→ACTIVE/REVOKED)
+- [x] 4.1 Implement webhook signature validation middleware (Ed25519 sig, timestamp freshness ±5min, nonce uniqueness)
+- [x] 4.2 Implement `POST /webhook/session-connected` — validate payload, create session, return bind_code (Flow 2) or status:pending (Flow 1)
+- [x] 4.3 Implement `POST /webhook/session-refresh` — validate, check max_refreshes, update session, issue new token
+- [x] 4.4 Implement `POST /webhook/session-revoked` — mark session REVOKED, invalidate Redis cache, idempotent on re-revoke
+- [x] 4.5 Implement `POST /webhook/session-resumed` — mark SUSPENDED session as ACTIVE, reject if not suspended
+- [x] 4.6 Implement session state machine enforcement (ACTIVE→EXPIRED/REVOKED/SUSPENDED, SUSPENDED→ACTIVE/REVOKED)
 
 ## 5. DPoP Token System
 

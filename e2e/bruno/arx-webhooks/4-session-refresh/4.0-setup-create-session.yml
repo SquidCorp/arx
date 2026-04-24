@@ -1,0 +1,23 @@
+info:
+  name: "4.0 Setup — create session for refresh tests"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"e2e-refresh-session","scopes":["cart.view"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("setup: should create session", function() {
+          expect(res.status).to.equal(201);
+          expect(res.body).to.have.property("sessionId");
+        });
+
+        bru.setVar("refreshSessionId", res.body.sessionId);

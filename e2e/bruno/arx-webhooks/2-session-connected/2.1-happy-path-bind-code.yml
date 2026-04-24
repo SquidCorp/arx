@@ -1,0 +1,38 @@
+info:
+  name: "2.1 Happy path — create session, get bind code"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"e2e-session-2.1","scopes":["cart.view","cart.edit"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 201 Created", function() {
+          expect(res.status).to.equal(201);
+        });
+
+        test("should return sessionId", function() {
+          expect(res.body).to.have.property("sessionId");
+          expect(res.body.sessionId).to.be.a("string");
+        });
+
+        test("should return bindCode", function() {
+          expect(res.body).to.have.property("bindCode");
+          expect(res.body.bindCode).to.be.a("string");
+        });
+
+        test("bindCode should be 64-char hex (test 2.2)", function() {
+          expect(res.body.bindCode).to.match(/^[0-9a-f]{64}$/);
+        });
+
+        // Store for downstream tests
+        bru.setVar("createdSessionId", res.body.sessionId);
+        bru.setVar("createdBindCode", res.body.bindCode);

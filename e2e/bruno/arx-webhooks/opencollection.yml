@@ -1,0 +1,16 @@
+info:
+  name: Arx Webhooks E2E
+  version: "1"
+  type: collection
+  description: End-to-end tests for Arx webhook session lifecycle endpoints.
+
+settings:
+  timeout: 5000
+  sslVerification: false
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Collection-level pre-request: no-op.
+        // Signing is handled per-folder (auto-sign folders) or per-request (middleware tests).

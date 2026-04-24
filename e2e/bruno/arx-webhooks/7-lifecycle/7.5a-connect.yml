@@ -1,0 +1,24 @@
+info:
+  name: "7.5a Refresh until max: connect"
+  type: http
+  seq: 20
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"e2e-lifecycle-7.5","scopes":["cart.view"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("7.5a should create session", function() {
+          expect(res.status).to.equal(201);
+        });
+
+        bru.setVar("lc75SessionId", res.body.sessionId);
+        bru.setVar("lc75RefreshCount", 0);
+        bru.setNextRequest("7.5b Refresh until max: refresh loop");

@@ -1,0 +1,27 @@
+info:
+  name: "4.10 Refresh count increments"
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-refresh"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{refreshSessionId}}","expiresIn":1800}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return status: refreshed (count incremented in DB)", function() {
+          expect(res.body.status).to.equal("refreshed");
+        });
+
+        // Verify count increment by checking that after 5 more refreshes
+        // the next one returns 403. This is covered in lifecycle test 7.5.

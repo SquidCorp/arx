@@ -1,0 +1,29 @@
+info:
+  name: "6.5 Resume expired session"
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-resumed"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{expiredSessionId}}"}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Requires an expired session. Set via SQL:
+        //   UPDATE sessions SET status = 'expired' WHERE id = '<session_id>';
+
+    - type: tests
+      code: |-
+        test("should return 409", function() {
+          expect(res.status).to.equal(409);
+        });
+
+        test("should return session_not_suspended error", function() {
+          expect(res.body.error).to.equal("session_not_suspended");
+        });

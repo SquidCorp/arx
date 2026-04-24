@@ -1,0 +1,33 @@
+info:
+  name: "1.05 Missing X-Arx-Nonce"
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: X-Arx-Tenant-ID
+      value: "{{tenantId}}"
+    - name: X-Arx-Signature
+      value: "dGVzdC1zaWduYXR1cmU="
+    - name: X-Arx-Timestamp
+      value: "1700000000"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"mw-test-5","scopes":["cart.view"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 401", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("should return missing_nonce error", function() {
+          expect(res.body.error).to.equal("missing_nonce");
+        });

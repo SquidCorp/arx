@@ -1,0 +1,21 @@
+info:
+  name: "7.1d Connect → Refresh → Revoke: revoke"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-revoked"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{lc71SessionId}}"}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("7.1d should revoke", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.status).to.equal("revoked");
+        });

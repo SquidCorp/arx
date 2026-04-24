@@ -1,0 +1,36 @@
+info:
+  name: "7.5b Refresh until max: refresh loop"
+  type: http
+  seq: 21
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-refresh"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{lc75SessionId}}","expiresIn":1800}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const count = bru.getVar("lc75RefreshCount") + 1;
+        bru.setVar("lc75RefreshCount", count);
+
+        if (count <= 5) {
+          test(`7.5b refresh #${count} should succeed`, function() {
+            expect(res.status).to.equal(200);
+            expect(res.body.status).to.equal("refreshed");
+          });
+          // Loop back for next refresh
+          bru.setNextRequest("7.5b Refresh until max: refresh loop");
+        } else {
+          test("7.5b refresh #6 should be rejected (max exceeded)", function() {
+            expect(res.status).to.equal(403);
+          });
+
+          test("should return max_refreshes_exceeded", function() {
+            expect(res.body.error).to.equal("max_refreshes_exceeded");
+          });
+        }

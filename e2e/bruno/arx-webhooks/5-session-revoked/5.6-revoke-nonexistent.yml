@@ -1,0 +1,24 @@
+info:
+  name: "5.6 Revoke nonexistent session"
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-revoked"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"00000000-0000-0000-0000-000000000000"}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 404", function() {
+          expect(res.status).to.equal(404);
+        });
+
+        test("should return session_not_found error", function() {
+          expect(res.body.error).to.equal("session_not_found");
+        });

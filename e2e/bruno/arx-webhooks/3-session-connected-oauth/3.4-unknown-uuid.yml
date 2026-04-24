@@ -1,0 +1,24 @@
+info:
+  name: "3.4 Unknown UUID"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"e2e-session-3.4","scopes":["cart.view"],"expiresIn":3600,"uuid":"nonexistent-uuid"}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 404", function() {
+          expect(res.status).to.equal(404);
+        });
+
+        test("should return unknown_flow error", function() {
+          expect(res.body.error).to.equal("unknown_flow");
+        });

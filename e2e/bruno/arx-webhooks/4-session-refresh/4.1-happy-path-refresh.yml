@@ -1,0 +1,28 @@
+info:
+  name: "4.1 Happy path — refresh active session"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-refresh"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{refreshSessionId}}","expiresIn":1800}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return status: refreshed", function() {
+          expect(res.body.status).to.equal("refreshed");
+        });
+
+        test("should return the sessionId", function() {
+          expect(res.body.sessionId).to.equal(bru.getVar("refreshSessionId"));
+        });

@@ -1,0 +1,63 @@
+info:
+  name: "1.09 Duplicate nonce (replay attack)"
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"mw-test-9","scopes":["cart.view"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+
+        const privateKeyHex = bru.getEnvVar('MERCHANT_PRIVATE_KEY');
+        const seed = Buffer.from(privateKeyHex, 'hex');
+        const pkcs8Prefix = Buffer.from('302e020100300506032b657004220420', 'hex');
+        const der = Buffer.concat([pkcs8Prefix, seed]);
+        const keyObject = crypto.createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
+
+        const timestamp = Math.floor(Date.now() / 1000).toString();
+        // Use a fixed nonce to test replay detection.
+        // First run of this test will pass (201), second run within 5 min will get 401.
+        const nonce = 'fixed-replay-nonce-e2e-test';
+        const body = JSON.stringify(req.getBody());
+        const method = req.getMethod();
+        const url = new URL(req.getUrl());
+        const path = url.pathname;
+
+        const message = `${method}\n${path}\n${timestamp}\n${nonce}\n${body}`;
+        const signature = crypto.sign(null, Buffer.from(message), keyObject);
+
+        req.setHeader('Content-Type', 'application/json');
+        req.setHeader('X-Arx-Tenant-ID', bru.getEnvVar('TENANT_ID'));
+        req.setHeader('X-Arx-Signature', signature.toString('base64'));
+        req.setHeader('X-Arx-Timestamp', timestamp);
+        req.setHeader('X-Arx-Nonce', nonce);
+
+    - type: tests
+      code: |-
+        // This test is designed to be run twice in sequence.
+        // The first run passes, the second should return duplicate_nonce.
+        // When run via `bru run`, set iteration-count=2 or run the folder twice.
+        const isReplay = res.status === 401;
+        if (isReplay) {
+          test("second request should return 401", function() {
+            expect(res.status).to.equal(401);
+          });
+          test("should return duplicate_nonce error", function() {
+            expect(res.body.error).to.equal("duplicate_nonce");
+          });
+        } else {
+          test("first request should pass", function() {
+            expect(res.status).to.equal(201);
+          });
+          // Queue a re-run to test the duplicate
+          bru.setNextRequest("1.09 Duplicate nonce (replay attack)");
+        }

@@ -1,0 +1,29 @@
+info:
+  name: "4.6 Refresh revoked session"
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-refresh"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{revokedSessionId}}","expiresIn":1800}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Requires a revoked session. Set via lifecycle tests or SQL:
+        //   UPDATE sessions SET status = 'revoked' WHERE id = '<session_id>';
+
+    - type: tests
+      code: |-
+        test("should return 409", function() {
+          expect(res.status).to.equal(409);
+        });
+
+        test("should return session_not_active error", function() {
+          expect(res.body.error).to.equal("session_not_active");
+        });

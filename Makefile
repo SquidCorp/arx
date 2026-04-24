@@ -1,4 +1,4 @@
-.PHONY: quality-gate fmt lint test coverage vuln dev dev-down migrate
+.PHONY: quality-gate fmt lint test coverage vuln dev dev-down migrate seed-test e2e
 
 # Main quality gate — run this!
 quality-gate: fmt lint test coverage vuln
@@ -63,6 +63,15 @@ migrate:
 			docker compose exec -T db psql -U postgres -d arx; \
 	done
 	@echo "✅ Migrations applied"
+
+seed-test:
+	@echo "🌱 Seeding test tenant..."
+	ARX_MASTER_KEY=$${ARX_MASTER_KEY:-$$(openssl rand -hex 32)} go run ./cmd/seedtest | tee e2e/bruno/arx-webhooks/.env
+	@echo "✅ Test tenant seeded — .env written to e2e/bruno/arx-webhooks/.env"
+
+e2e:
+	@echo "🧪 Running Bruno e2e tests..."
+	cd e2e/bruno/arx-webhooks && bru run --env local --sandbox=developer --reporter-json ./reports/results.json
 
 docs:
 	@echo "📖 Starting local documentation server (pkgsite)..."

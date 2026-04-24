@@ -1,0 +1,3 @@
+info:
+  name: 1 - Middleware Signature Validation
+  description: Tests for the signature validation pipeline. Each request manages its own headers.

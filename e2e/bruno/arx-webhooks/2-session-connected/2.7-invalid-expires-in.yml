@@ -1,0 +1,24 @@
+info:
+  name: "2.7 Invalid expiresIn (0 or negative)"
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"e2e-session-2.7","scopes":["cart.view"],"expiresIn":0}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should return invalid_expires_in error", function() {
+          expect(res.body.error).to.equal("invalid_expires_in");
+        });

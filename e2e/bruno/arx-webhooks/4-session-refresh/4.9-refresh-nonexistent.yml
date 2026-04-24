@@ -1,0 +1,24 @@
+info:
+  name: "4.9 Refresh nonexistent session"
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-refresh"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"00000000-0000-0000-0000-000000000000","expiresIn":1800}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 404", function() {
+          expect(res.status).to.equal(404);
+        });
+
+        test("should return session_not_found error", function() {
+          expect(res.body.error).to.equal("session_not_found");
+        });

@@ -1,0 +1,31 @@
+info:
+  name: "4.5 Max refreshes exceeded"
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-refresh"
+  body:
+    type: json
+    data: |-
+      {"sessionId":"{{maxRefreshSessionId}}","expiresIn":1800}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // This test requires a session with refresh_count >= 5.
+        // The 4.10 test creates this session. Run folder in order.
+        // If running standalone, seed a session with refresh_count=5 via SQL:
+        //   UPDATE sessions SET refresh_count = 5 WHERE id = '<session_id>';
+
+    - type: tests
+      code: |-
+        test("should return 403", function() {
+          expect(res.status).to.equal(403);
+        });
+
+        test("should return max_refreshes_exceeded error", function() {
+          expect(res.body.error).to.equal("max_refreshes_exceeded");
+        });

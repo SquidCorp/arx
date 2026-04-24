@@ -1,0 +1,27 @@
+info:
+  name: "1.02 Missing X-Arx-Tenant-ID"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/session-connected"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {"sessionId":"mw-test-2","scopes":["cart.view"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should return missing_tenant_id error", function() {
+          expect(res.body.error).to.equal("missing_tenant_id");
+        });
