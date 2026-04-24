@@ -1,0 +1,24 @@
+info:
+  name: "3.4 Update post - title exceeds 200 chars"
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/posts/{{updatePostId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "body": "Valid body.",
+        "authorId": "550e8400-e29b-41d4-a716-446655440000"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should reject title longer than 200 characters on update", function() {
+          expect(res.status).to.be.oneOf([400, 422]);
+        });

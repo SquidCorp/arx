@@ -1,0 +1,35 @@
+info:
+  name: "2.2 Invalid signature"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhooks/payment"
+  headers:
+    - name: X-Webhook-Signature
+      value: "deadbeef0000000000000000000000000000000000000000000000000000000"
+  body:
+    type: json
+    data: |-
+      {
+        "id": "evt_badsig_001",
+        "type": "payment.completed",
+        "data": {
+          "payment_id": "pay_badsig",
+          "amount": 1000,
+          "currency": "usd"
+        }
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 401 when signature is invalid", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("should not include processed flag", function() {
+          expect(res.body).to.not.have.property("processed");
+        });

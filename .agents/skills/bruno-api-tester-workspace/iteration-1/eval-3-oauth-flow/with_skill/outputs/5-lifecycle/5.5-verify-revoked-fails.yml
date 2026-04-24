@@ -1,0 +1,25 @@
+info:
+  name: "5.5 Lifecycle - verify revoked token fails"
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{baseUrl}}/oauth/userinfo"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Use the same token that was revoked in 5.4.
+        const revokedToken = bru.getVar('lcAccessToken');
+        req.setHeader('Authorization', 'Bearer ' + revokedToken);
+    - type: tests
+      code: |-
+        test("lifecycle: revoked token should be rejected with 401", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("lifecycle: should include an error description", function() {
+          expect(res.body).to.have.property("error");
+        });

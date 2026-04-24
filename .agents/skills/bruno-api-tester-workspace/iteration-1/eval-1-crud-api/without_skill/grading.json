@@ -1,0 +1,60 @@
+{
+  "run_id": "eval-1-without_skill",
+  "expectations": [
+    {
+      "text": "has-opencollection-yml",
+      "passed": true,
+      "evidence": "opencollection.yml exists with name: 'Blog Posts API', version: '1', type: 'collection'"
+    },
+    {
+      "text": "has-env-sample",
+      "passed": true,
+      "evidence": ".env.sample exists with API_TOKEN=your-api-token-here"
+    },
+    {
+      "text": "has-gitignore",
+      "passed": true,
+      "evidence": ".gitignore contains '.env'"
+    },
+    {
+      "text": "has-environment-file",
+      "passed": false,
+      "evidence": "environments/local.yml exists and bridges process.env.API_TOKEN via {{process.env.API_TOKEN}}, but baseUrl is hardcoded to 'http://localhost:3000' rather than bridging process.env.BASE_URL"
+    },
+    {
+      "text": "folder-level-auth",
+      "passed": false,
+      "evidence": "No folder.yml files exist anywhere in the output directory. Auth is set per-request via headers, not via folder-level before-request scripts."
+    },
+    {
+      "text": "happy-path-coverage",
+      "passed": true,
+      "evidence": "Happy path tests exist for all CRUD ops: create-post-success.yml (POST 201), get-post-success.yml (GET 200), update-post-success.yml (PUT 200), delete-post-success.yml (DELETE 204)"
+    },
+    {
+      "text": "error-case-coverage",
+      "passed": true,
+      "evidence": "Tests exist for missing title (create-post-missing-title.yml, 400), missing body (create-post-missing-body.yml, 400), and invalid authorId (create-post-invalid-author-id.yml, 400)"
+    },
+    {
+      "text": "404-coverage",
+      "passed": true,
+      "evidence": "get-post-not-found.yml and delete-post-not-found.yml both assert status 404 on nonexistent resource UUID"
+    },
+    {
+      "text": "uses-opencollection-yaml",
+      "passed": false,
+      "evidence": "Files use version/name/type/http/assertions keys but lack the OpenCollection 'info' and 'runtime' top-level keys. Format resembles Bruno's native YAML but not strict OpenCollection spec with info/http/runtime structure."
+    },
+    {
+      "text": "state-sharing",
+      "passed": true,
+      "evidence": "create-post-success.yml uses bru.setVar('postId', res.body.id) in post-response script; subsequent tests reference {{postId}}"
+    },
+    {
+      "text": "correct-assertions",
+      "passed": false,
+      "evidence": "Tests use Bruno's declarative assertions format (type: status/jsonpath with operator: isDefined) rather than Chai expect() calls in scripts. No expect() usage found in any test file."
+    }
+  ]
+}

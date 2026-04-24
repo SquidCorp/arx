@@ -1,0 +1,32 @@
+info:
+  name: "4.2 Duplicate delivery of same event (rejected)"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhooks/payment"
+  body:
+    type: json
+    data: |-
+      {
+        "id": "evt_dedup_001",
+        "type": "payment.completed",
+        "data": {
+          "payment_id": "pay_dedup",
+          "amount": 3000,
+          "currency": "usd"
+        }
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 409 for duplicate event ID", function() {
+          expect(res.status).to.equal(409);
+        });
+
+        test("should not include processed flag on duplicate", function() {
+          expect(res.body.processed).to.not.equal(true);
+        });

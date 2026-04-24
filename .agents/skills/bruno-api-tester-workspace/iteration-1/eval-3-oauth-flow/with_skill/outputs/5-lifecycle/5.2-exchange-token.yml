@@ -1,0 +1,36 @@
+info:
+  name: "5.2 Lifecycle - exchange code for tokens"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/token"
+  body:
+    type: json
+    data: |-
+      {
+        "grant_type": "authorization_code",
+        "code": "{{lcAuthCode}}",
+        "client_id": "{{clientId}}",
+        "client_secret": "{{clientSecret}}"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("lifecycle: should return tokens", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body).to.have.property("access_token");
+          expect(res.body).to.have.property("refresh_token");
+          expect(res.body).to.have.property("expires_in");
+          expect(res.body).to.have.property("token_type");
+        });
+
+        test("lifecycle: token_type should be Bearer", function() {
+          expect(res.body.token_type.toLowerCase()).to.equal("bearer");
+        });
+
+        bru.setVar("lcAccessToken", res.body.access_token);
+        bru.setVar("lcRefreshToken", res.body.refresh_token);

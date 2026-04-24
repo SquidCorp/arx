@@ -1,0 +1,28 @@
+info:
+  name: "2.0 Setup - obtain authorization code"
+  type: http
+  seq: 0
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/authorize"
+  body:
+    type: json
+    data: |-
+      {
+        "client_id": "{{clientId}}",
+        "redirect_uri": "http://localhost:3000/callback",
+        "scope": "openid profile email",
+        "state": "e2e-token-setup"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("setup: should obtain authorization code", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body).to.have.property("code");
+        });
+
+        bru.setVar("authCode", res.body.code);

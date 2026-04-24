@@ -1,0 +1,50 @@
+{
+  "run_id": "eval-3-without_skill",
+  "expectations": [
+    {
+      "text": "has-opencollection-yml",
+      "passed": true,
+      "evidence": "opencollection.yml exists with version: \"1\", name: OAuth2 Authorization Code Flow, type: collection"
+    },
+    {
+      "text": "lifecycle-chaining",
+      "passed": true,
+      "evidence": "authorize.yml uses bru.setVar(\"auth_code\", body.code); token-exchange.yml uses bru.setVar(\"access_token\") and bru.setVar(\"refresh_token\"); seq ordering (1-5) chains authorize->token->userinfo->revoke->verify"
+    },
+    {
+      "text": "authorize-tests",
+      "passed": true,
+      "evidence": "authorize.yml: POST {{base_url}}/oauth/authorize with assertions on status 200, jsonBody path code op isDefined, and jsonBody path state value random-state-value"
+    },
+    {
+      "text": "token-exchange-tests",
+      "passed": true,
+      "evidence": "token-exchange.yml: POST {{base_url}}/oauth/token with grant_type authorization_code and code {{auth_code}}; assertions on access_token, refresh_token, expires_in, token_type"
+    },
+    {
+      "text": "userinfo-tests",
+      "passed": true,
+      "evidence": "userinfo.yml: GET {{base_url}}/oauth/userinfo with auth bearer token {{access_token}}; assertions on status 200, id, email, name"
+    },
+    {
+      "text": "revoke-tests",
+      "passed": true,
+      "evidence": "revoke-token.yml: POST {{base_url}}/oauth/revoke with body token {{access_token}}; assertion on status 204"
+    },
+    {
+      "text": "revoked-token-fails",
+      "passed": true,
+      "evidence": "verify-revoked-token.yml: GET /oauth/userinfo with revoked {{access_token}} as bearer; assertion on status 401"
+    },
+    {
+      "text": "error-cases",
+      "passed": false,
+      "evidence": "No error case tests found. No requests test invalid client_id, expired code, missing parameters, or other error scenarios. All 5 requests only cover the happy path."
+    },
+    {
+      "text": "env-var-credentials",
+      "passed": true,
+      "evidence": "environments/local.yml: client_id value \"{{process.env.CLIENT_ID}}\" and client_secret value \"{{process.env.CLIENT_SECRET}}\"; .env.sample provides CLIENT_ID and CLIENT_SECRET placeholders"
+    }
+  ]
+}

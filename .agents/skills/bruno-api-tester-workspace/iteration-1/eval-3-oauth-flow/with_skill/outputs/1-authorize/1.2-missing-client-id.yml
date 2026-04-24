@@ -1,0 +1,28 @@
+info:
+  name: "1.2 Authorize - missing client_id"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/authorize"
+  body:
+    type: json
+    data: |-
+      {
+        "redirect_uri": "http://localhost:3000/callback",
+        "scope": "openid profile email",
+        "state": "e2e-authorize-state-2"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400 for missing client_id", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should include an error description", function() {
+          expect(res.body).to.have.property("error");
+        });

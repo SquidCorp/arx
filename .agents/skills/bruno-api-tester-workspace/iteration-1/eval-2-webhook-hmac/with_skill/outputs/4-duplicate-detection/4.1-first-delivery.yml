@@ -1,0 +1,33 @@
+info:
+  name: "4.1 First delivery of event (accepted)"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhooks/payment"
+  body:
+    type: json
+    data: |-
+      {
+        "id": "evt_dedup_001",
+        "type": "payment.completed",
+        "data": {
+          "payment_id": "pay_dedup",
+          "amount": 3000,
+          "currency": "usd"
+        }
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200 on first delivery", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should confirm event was processed", function() {
+          expect(res.body).to.have.property("processed");
+          expect(res.body.processed).to.equal(true);
+        });

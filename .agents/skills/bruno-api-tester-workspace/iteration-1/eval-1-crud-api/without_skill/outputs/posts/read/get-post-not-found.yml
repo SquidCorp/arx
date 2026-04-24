@@ -1,0 +1,17 @@
+version: "1"
+name: Get Post - Not Found
+type: http
+seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/posts/00000000-0000-0000-0000-000000000000"
+  headers:
+    Authorization: "Bearer {{apiToken}}"
+
+assertions:
+  - type: status
+    value: 404
+  - type: jsonpath
+    expression: $.error
+    operator: isDefined

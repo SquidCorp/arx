@@ -1,0 +1,20 @@
+info:
+  name: Webhook Payment Receiver
+  version: "1"
+  type: collection
+  description: >-
+    Tests for a Stripe-like webhook receiver at POST /webhooks/payment.
+    Covers HMAC-SHA256 signature verification, event handling for
+    payment.completed, payment.failed, and payment.refunded events,
+    input validation, and duplicate event detection.
+
+settings:
+  timeout: 5000
+  sslVerification: false
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Collection-level pre-request: no-op.
+        // Signing/auth is handled per-folder or per-request.

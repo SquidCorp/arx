@@ -1,0 +1,29 @@
+info:
+  name: "2.4 Token exchange - wrong grant_type"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/token"
+  body:
+    type: json
+    data: |-
+      {
+        "grant_type": "client_credentials",
+        "code": "{{authCode}}",
+        "client_id": "{{clientId}}",
+        "client_secret": "{{clientSecret}}"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should reject unsupported grant_type", function() {
+          expect(res.status).to.be.oneOf([400, 422]);
+        });
+
+        test("should include an error description", function() {
+          expect(res.body).to.have.property("error");
+        });

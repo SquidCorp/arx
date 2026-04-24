@@ -1,0 +1,13 @@
+info:
+  name: 3 - Validation Errors
+  description: >-
+    Validates that the webhook receiver returns 400 for malformed or
+    invalid JSON payloads.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Signing is handled per-request since some tests send raw strings
+        // that cannot be signed via the normal JSON body flow.
+        req.setHeader('Content-Type', 'application/json');

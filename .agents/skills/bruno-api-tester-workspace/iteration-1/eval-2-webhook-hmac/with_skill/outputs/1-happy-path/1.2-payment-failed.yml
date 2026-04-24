@@ -1,0 +1,39 @@
+info:
+  name: "1.2 Payment failed event"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhooks/payment"
+  body:
+    type: json
+    data: |-
+      {
+        "id": "evt_failed_001",
+        "type": "payment.failed",
+        "data": {
+          "payment_id": "pay_def456",
+          "amount": 2500,
+          "currency": "usd",
+          "failure_reason": "insufficient_funds"
+        }
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should confirm event was processed", function() {
+          expect(res.body).to.have.property("processed");
+          expect(res.body.processed).to.equal(true);
+        });
+
+        test("should include notify action for failed payments", function() {
+          expect(res.body).to.have.property("action");
+          expect(res.body.action).to.equal("notify");
+        });

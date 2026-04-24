@@ -1,0 +1,11 @@
+info:
+  name: 4 - Delete Post
+  description: Tests for DELETE /posts/:id endpoint covering happy path and 404 scenarios.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const token = bru.getEnvVar('apiToken');
+        req.setHeader('Authorization', `Bearer ${token}`);
+        req.setHeader('Content-Type', 'application/json');

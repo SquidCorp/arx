@@ -1,0 +1,28 @@
+info:
+  name: "1.2 Create post - missing title"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  body:
+    type: json
+    data: |-
+      {
+        "body": "A post without a title.",
+        "authorId": "550e8400-e29b-41d4-a716-446655440000"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400 for missing title", function() {
+          expect(res.status).to.be.oneOf([400, 422]);
+        });
+
+        test("should include an error message about title", function() {
+          const body = JSON.stringify(res.body).toLowerCase();
+          expect(body).to.include("title");
+        });

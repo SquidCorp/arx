@@ -1,0 +1,29 @@
+info:
+  name: "1.5 Create post - invalid authorId"
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Post With Bad Author",
+        "body": "Body content here.",
+        "authorId": "not-a-valid-uuid"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should reject invalid authorId format", function() {
+          expect(res.status).to.be.oneOf([400, 422]);
+        });
+
+        test("should reference authorId in error response", function() {
+          const raw = JSON.stringify(res.body).toLowerCase();
+          expect(raw).to.match(/author/);
+        });

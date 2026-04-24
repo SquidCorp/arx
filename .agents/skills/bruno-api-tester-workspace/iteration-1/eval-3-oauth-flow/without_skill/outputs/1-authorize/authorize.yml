@@ -1,0 +1,35 @@
+meta:
+  name: Authorize
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/oauth/authorize"
+  body: json
+  auth: none
+
+body:
+  json: |
+    {
+      "client_id": "{{client_id}}",
+      "redirect_uri": "{{redirect_uri}}",
+      "scope": "openid profile email",
+      "state": "random-state-value"
+    }
+
+assertions:
+  - type: status
+    value: 200
+  - type: isJson
+  - type: jsonBody
+    path: code
+    op: isDefined
+  - type: jsonBody
+    path: state
+    value: "random-state-value"
+
+scripts:
+  post-response: |
+    const body = res.getBody();
+    bru.setVar("auth_code", body.code);

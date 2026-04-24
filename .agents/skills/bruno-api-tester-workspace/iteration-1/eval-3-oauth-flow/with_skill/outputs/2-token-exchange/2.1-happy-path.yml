@@ -1,0 +1,52 @@
+info:
+  name: "2.1 Token exchange - happy path"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/token"
+  body:
+    type: json
+    data: |-
+      {
+        "grant_type": "authorization_code",
+        "code": "{{authCode}}",
+        "client_id": "{{clientId}}",
+        "client_secret": "{{clientSecret}}"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return an access_token", function() {
+          expect(res.body).to.have.property("access_token");
+          expect(res.body.access_token).to.be.a("string");
+          expect(res.body.access_token.length).to.be.greaterThan(0);
+        });
+
+        test("should return a refresh_token", function() {
+          expect(res.body).to.have.property("refresh_token");
+          expect(res.body.refresh_token).to.be.a("string");
+          expect(res.body.refresh_token.length).to.be.greaterThan(0);
+        });
+
+        test("should return expires_in as a number", function() {
+          expect(res.body).to.have.property("expires_in");
+          expect(res.body.expires_in).to.be.a("number");
+          expect(res.body.expires_in).to.be.greaterThan(0);
+        });
+
+        test("should return token_type Bearer", function() {
+          expect(res.body).to.have.property("token_type");
+          expect(res.body.token_type.toLowerCase()).to.equal("bearer");
+        });
+
+        // Store tokens for downstream tests
+        bru.setVar("accessToken", res.body.access_token);
+        bru.setVar("refreshToken", res.body.refresh_token);

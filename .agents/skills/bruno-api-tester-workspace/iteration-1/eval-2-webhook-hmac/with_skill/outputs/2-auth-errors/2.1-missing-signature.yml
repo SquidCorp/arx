@@ -1,0 +1,32 @@
+info:
+  name: "2.1 Missing signature header"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhooks/payment"
+  body:
+    type: json
+    data: |-
+      {
+        "id": "evt_nosig_001",
+        "type": "payment.completed",
+        "data": {
+          "payment_id": "pay_nosig",
+          "amount": 1000,
+          "currency": "usd"
+        }
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 401 when signature header is missing", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("should not include processed flag", function() {
+          expect(res.body).to.not.have.property("processed");
+        });

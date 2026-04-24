@@ -1,0 +1,90 @@
+{
+  "skill_name": "bruno-api-tester",
+  "iteration": 1,
+  "configurations": [
+    {
+      "name": "with_skill",
+      "label": "With Skill",
+      "evals": [
+        {
+          "eval_name": "crud-api-blog-posts",
+          "pass_rate": 1.0,
+          "passed": 11,
+          "total": 11,
+          "duration_seconds": 145.5,
+          "total_tokens": 38866
+        },
+        {
+          "eval_name": "webhook-hmac-signature",
+          "pass_rate": 1.0,
+          "passed": 8,
+          "total": 8,
+          "duration_seconds": 122.1,
+          "total_tokens": 34248
+        },
+        {
+          "eval_name": "oauth2-authorization-code-flow",
+          "pass_rate": 1.0,
+          "passed": 9,
+          "total": 9,
+          "duration_seconds": 154.3,
+          "total_tokens": 41295
+        }
+      ],
+      "aggregate": {
+        "mean_pass_rate": 1.0,
+        "stddev_pass_rate": 0.0,
+        "mean_duration_seconds": 140.6,
+        "mean_tokens": 38136
+      }
+    },
+    {
+      "name": "without_skill",
+      "label": "Without Skill (Baseline)",
+      "evals": [
+        {
+          "eval_name": "crud-api-blog-posts",
+          "pass_rate": 0.636,
+          "passed": 7,
+          "total": 11,
+          "duration_seconds": 84.6,
+          "total_tokens": 19332
+        },
+        {
+          "eval_name": "webhook-hmac-signature",
+          "pass_rate": 0.875,
+          "passed": 7,
+          "total": 8,
+          "duration_seconds": 65.0,
+          "total_tokens": 16502
+        },
+        {
+          "eval_name": "oauth2-authorization-code-flow",
+          "pass_rate": 0.889,
+          "passed": 8,
+          "total": 9,
+          "duration_seconds": 50.2,
+          "total_tokens": 14741
+        }
+      ],
+      "aggregate": {
+        "mean_pass_rate": 0.8,
+        "stddev_pass_rate": 0.115,
+        "mean_duration_seconds": 66.6,
+        "mean_tokens": 16858
+      }
+    }
+  ],
+  "delta": {
+    "pass_rate": "+20.0%",
+    "duration": "+111.1% (more thorough)",
+    "tokens": "+126.2% (more output)"
+  },
+  "analysis": [
+    "The skill achieved 100% pass rate across all 3 evals (28/28 assertions) vs baseline 80% (22/28).",
+    "Baseline consistently failed on: folder-level auth scripts (duplicated auth per-request instead), OpenCollection YAML format (used Bru markup or declarative assertions), and error case coverage (OAuth baseline had zero error tests).",
+    "The skill uses ~2x more tokens and time, but this reflects genuinely more output: more test files, better folder structure, lifecycle sequences, and comprehensive error cases.",
+    "Non-discriminating assertions: has-opencollection-yml and has-gitignore passed for both configurations across all evals -- consider removing or replacing with more differentiating checks.",
+    "The biggest skill win was on CRUD (eval 1): 27 test files vs 14, with folder-level auth, proper YAML format, and Chai assertions -- baseline missed all 4 structural assertions."
+  ]
+}

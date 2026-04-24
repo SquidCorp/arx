@@ -1,0 +1,20 @@
+meta:
+  name: Revoke Token
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{base_url}}/oauth/revoke"
+  body: json
+  auth: none
+
+body:
+  json: |
+    {
+      "token": "{{access_token}}"
+    }
+
+assertions:
+  - type: status
+    value: 204

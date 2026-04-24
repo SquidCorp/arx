@@ -1,0 +1,15 @@
+info:
+  name: 3 - User Info
+  description: >-
+    Tests for GET /oauth/userinfo — retrieving the authenticated user's
+    profile using a Bearer access token.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Inject Bearer token for all requests in this folder.
+        const token = bru.getVar('accessToken');
+        if (token) {
+          req.setHeader('Authorization', 'Bearer ' + token);
+        }

@@ -1,0 +1,11 @@
+info:
+  name: 1 - Create Post
+  description: Tests for POST /posts endpoint covering happy path, validation errors, and edge cases.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const token = bru.getEnvVar('apiToken');
+        req.setHeader('Authorization', `Bearer ${token}`);
+        req.setHeader('Content-Type', 'application/json');

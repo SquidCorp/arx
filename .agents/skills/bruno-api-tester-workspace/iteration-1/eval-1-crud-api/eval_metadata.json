@@ -1,0 +1,18 @@
+{
+  "eval_id": 1,
+  "eval_name": "crud-api-blog-posts",
+  "prompt": "Write Bruno tests for a REST API that manages blog posts (CRUD). Base URL is http://localhost:3000. Auth is via Bearer token from env var API_TOKEN. Endpoints: POST /posts (create), GET /posts/:id (read), PUT /posts/:id (update), DELETE /posts/:id (delete). Posts have id, title, body, authorId, createdAt, updatedAt. Title is required and max 200 chars. Body is required. authorId is a UUID. Cover happy paths, validation errors, and 404s.",
+  "assertions": [
+    {"name": "has-opencollection-yml", "description": "opencollection.yml exists with name, version, type fields"},
+    {"name": "has-env-sample", "description": ".env.sample exists with API_TOKEN placeholder"},
+    {"name": "has-gitignore", "description": ".gitignore contains .env"},
+    {"name": "has-environment-file", "description": "environments/local.yml exists bridging process.env.BASE_URL and process.env.API_TOKEN"},
+    {"name": "folder-level-auth", "description": "At least one folder.yml contains Bearer token auth in before-request script"},
+    {"name": "happy-path-coverage", "description": "At least one happy path test per CRUD operation (create, read, update, delete)"},
+    {"name": "error-case-coverage", "description": "Tests exist for missing required fields (title, body) or invalid authorId"},
+    {"name": "404-coverage", "description": "At least one test for 404 on nonexistent resource"},
+    {"name": "uses-opencollection-yaml", "description": "Test files use OpenCollection YAML format (info/http/runtime keys), not Bru markup"},
+    {"name": "state-sharing", "description": "Uses bru.setVar to store created post ID for use in subsequent tests"},
+    {"name": "correct-assertions", "description": "Tests use Chai expect() with status code and body property assertions"}
+  ]
+}

@@ -1,0 +1,20 @@
+info:
+  name: 1 - Happy Path
+  description: >-
+    Validates successful webhook processing for all supported payment events.
+    The folder-level pre-request script computes the HMAC-SHA256 signature
+    over the raw JSON body using the shared secret, then injects the
+    X-Webhook-Signature header so every request in this folder is properly signed.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+        const secret = bru.getProcessEnv('WEBHOOK_SECRET');
+        const body = req.getBody() ? JSON.stringify(req.getBody()) : '';
+        const signature = crypto.createHmac('sha256', secret)
+          .update(body)
+          .digest('hex');
+        req.setHeader('X-Webhook-Signature', signature);
+        req.setHeader('Content-Type', 'application/json');

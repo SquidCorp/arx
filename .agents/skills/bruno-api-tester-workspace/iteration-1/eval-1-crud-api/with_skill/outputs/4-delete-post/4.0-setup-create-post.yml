@@ -1,0 +1,25 @@
+info:
+  name: "4.0 Setup - create post for delete tests"
+  type: http
+  seq: 0
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Delete Test Post",
+        "body": "This post will be deleted.",
+        "authorId": "550e8400-e29b-41d4-a716-446655440000"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("setup: should create post for delete tests", function() {
+          expect(res.status).to.equal(201);
+        });
+        bru.setVar("deletePostId", res.body.id);

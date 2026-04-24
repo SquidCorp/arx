@@ -1,0 +1,23 @@
+{
+  "skill_name": "bruno-api-tester",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write Bruno tests for a REST API that manages blog posts (CRUD). Base URL is http://localhost:3000. Auth is via Bearer token from env var API_TOKEN. Endpoints: POST /posts (create), GET /posts/:id (read), PUT /posts/:id (update), DELETE /posts/:id (delete). Posts have id, title, body, authorId, createdAt, updatedAt. Title is required and max 200 chars. Body is required. authorId is a UUID. Cover happy paths, validation errors, and 404s.",
+      "expected_output": "A Bruno OpenCollection with: opencollection.yml, environments/local.yml, .env.sample, .gitignore, and test folders covering CRUD operations with happy paths, error cases (missing title, missing body, invalid authorId), and 404 on nonexistent post. Bearer token auth in folder-level scripts.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Create Bruno tests for a Stripe-like webhook receiver at POST /webhooks/payment. It requires HMAC-SHA256 signature in X-Webhook-Signature header computed as hex digest of the raw JSON body using the secret from env var WEBHOOK_SECRET. Events: payment.completed (returns 200 with {processed: true}), payment.failed (returns 200 with {processed: true, action: 'notify'}), payment.refunded (returns 200 with {processed: true, action: 'credit'}). Returns 400 for invalid JSON, 401 for bad/missing signature, 409 for duplicate event ID. Base URL http://localhost:4000.",
+      "expected_output": "A Bruno OpenCollection with: HMAC signing in folder-level pre-request script, happy path tests for each event type, error tests for missing signature, wrong signature, malformed JSON, duplicate event ID. Each test asserts status codes and response bodies.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Write Bruno e2e tests for an OAuth2 authorization code flow. Endpoints: POST /oauth/authorize (body: {client_id, redirect_uri, scope, state} returns {code, state}), POST /oauth/token (body: {grant_type: 'authorization_code', code, client_id, client_secret} returns {access_token, refresh_token, expires_in, token_type}), GET /oauth/userinfo (requires Bearer token, returns user profile), POST /oauth/revoke (body: {token} returns 204). Base URL http://localhost:8080. Client credentials: CLIENT_ID and CLIENT_SECRET from env vars. Test the full lifecycle: authorize -> exchange -> use token -> revoke -> verify revoked token fails.",
+      "expected_output": "A Bruno OpenCollection with: environment file bridging CLIENT_ID and CLIENT_SECRET, test folders for each endpoint plus a lifecycle sequence folder. Lifecycle uses bru.setVar/bru.setNextRequest to chain authorize->token->userinfo->revoke. Error cases: invalid client_id, expired code, revoked token returns 401.",
+      "files": []
+    }
+  ]
+}

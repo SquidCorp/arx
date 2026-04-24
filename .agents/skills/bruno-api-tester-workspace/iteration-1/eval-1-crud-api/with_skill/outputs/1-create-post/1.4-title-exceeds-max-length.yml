@@ -1,0 +1,29 @@
+info:
+  name: "1.4 Create post - title exceeds 200 chars"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "body": "Body content for a post with a title that is too long.",
+        "authorId": "550e8400-e29b-41d4-a716-446655440000"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should reject title longer than 200 characters", function() {
+          expect(res.status).to.be.oneOf([400, 422]);
+        });
+
+        test("should reference title in error response", function() {
+          const raw = JSON.stringify(res.body).toLowerCase();
+          expect(raw).to.include("title");
+        });

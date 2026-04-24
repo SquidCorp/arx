@@ -1,0 +1,33 @@
+meta:
+  name: Invalid Signature
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhooks/payment"
+  body: json
+  auth: none
+
+headers:
+  Content-Type: application/json
+  X-Webhook-Signature: "deadbeef0000000000000000000000000000000000000000000000000000cafe"
+
+body:
+  json: |
+    {
+      "id": "evt_bad_sig_001",
+      "type": "payment.completed",
+      "data": {
+        "payment_id": "pay_badsig",
+        "amount": 1500,
+        "currency": "usd",
+        "customer_id": "cus_badsig"
+      },
+      "created_at": "2026-04-24T12:04:00Z"
+    }
+
+tests: |
+  test("should return 401 for invalid signature", () => {
+    expect(res.getStatus()).to.equal(401);
+  });

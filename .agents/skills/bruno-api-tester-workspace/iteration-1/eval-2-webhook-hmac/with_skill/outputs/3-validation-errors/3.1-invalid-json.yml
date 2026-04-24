@@ -1,0 +1,29 @@
+info:
+  name: "3.1 Invalid JSON body"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhooks/payment"
+  body:
+    type: json
+    data: |-
+      {not valid json at all
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+        const secret = bru.getProcessEnv('WEBHOOK_SECRET');
+        const rawBody = '{not valid json at all';
+        const signature = crypto.createHmac('sha256', secret)
+          .update(rawBody)
+          .digest('hex');
+        req.setHeader('X-Webhook-Signature', signature);
+    - type: tests
+      code: |-
+        test("should return 400 for invalid JSON", function() {
+          expect(res.status).to.equal(400);
+        });

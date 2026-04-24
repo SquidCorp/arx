@@ -1,0 +1,24 @@
+info:
+  name: "3.2 Userinfo - missing token"
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/oauth/userinfo"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Override folder-level auth — send no Authorization header.
+        req.setHeader('Authorization', '');
+    - type: tests
+      code: |-
+        test("should return 401 without a token", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("should include an error description", function() {
+          expect(res.body).to.have.property("error");
+        });

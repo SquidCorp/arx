@@ -1,0 +1,31 @@
+info:
+  name: "2.3 Empty signature header"
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhooks/payment"
+  headers:
+    - name: X-Webhook-Signature
+      value: ""
+  body:
+    type: json
+    data: |-
+      {
+        "id": "evt_emptysig_001",
+        "type": "payment.completed",
+        "data": {
+          "payment_id": "pay_emptysig",
+          "amount": 1000,
+          "currency": "usd"
+        }
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 401 when signature header is empty", function() {
+          expect(res.status).to.equal(401);
+        });

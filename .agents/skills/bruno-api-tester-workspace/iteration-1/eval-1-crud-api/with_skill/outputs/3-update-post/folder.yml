@@ -1,0 +1,11 @@
+info:
+  name: 3 - Update Post
+  description: Tests for PUT /posts/:id endpoint covering happy path, validation errors, and 404 scenarios.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const token = bru.getEnvVar('apiToken');
+        req.setHeader('Authorization', `Bearer ${token}`);
+        req.setHeader('Content-Type', 'application/json');

@@ -1,0 +1,12 @@
+info:
+  name: 5 - Full Lifecycle
+  description: >-
+    End-to-end lifecycle sequence: authorize -> exchange code for tokens ->
+    use token to fetch userinfo -> revoke token -> verify revoked token fails.
+    Tests run in strict order and pass state between requests.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        req.setHeader('Content-Type', 'application/json');

@@ -1,0 +1,29 @@
+info:
+  name: "2.2 Token exchange - invalid code"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/token"
+  body:
+    type: json
+    data: |-
+      {
+        "grant_type": "authorization_code",
+        "code": "invalid-auth-code-does-not-exist",
+        "client_id": "{{clientId}}",
+        "client_secret": "{{clientSecret}}"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400 for invalid authorization code", function() {
+          expect(res.status).to.be.oneOf([400, 401]);
+        });
+
+        test("should include an error description", function() {
+          expect(res.body).to.have.property("error");
+        });

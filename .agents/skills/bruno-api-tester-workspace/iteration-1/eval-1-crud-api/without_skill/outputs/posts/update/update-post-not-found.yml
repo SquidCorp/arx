@@ -1,0 +1,26 @@
+version: "1"
+name: Update Post - Not Found
+type: http
+seq: 2
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/posts/00000000-0000-0000-0000-000000000000"
+  headers:
+    Content-Type: application/json
+    Authorization: "Bearer {{apiToken}}"
+  body:
+    type: json
+    content: |
+      {
+        "title": "Updating a Non-Existent Post",
+        "body": "This should fail because the post does not exist.",
+        "authorId": "{{authorId}}"
+      }
+
+assertions:
+  - type: status
+    value: 404
+  - type: jsonpath
+    expression: $.error
+    operator: isDefined

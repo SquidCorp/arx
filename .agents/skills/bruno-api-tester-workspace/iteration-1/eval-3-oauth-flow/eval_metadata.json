@@ -1,0 +1,16 @@
+{
+  "eval_id": 3,
+  "eval_name": "oauth2-authorization-code-flow",
+  "prompt": "Write Bruno e2e tests for an OAuth2 authorization code flow. Endpoints: POST /oauth/authorize, POST /oauth/token, GET /oauth/userinfo, POST /oauth/revoke. Base URL http://localhost:8080. Client credentials from env vars CLIENT_ID and CLIENT_SECRET. Test the full lifecycle and error cases.",
+  "assertions": [
+    {"name": "has-opencollection-yml", "description": "opencollection.yml exists with correct structure"},
+    {"name": "lifecycle-chaining", "description": "Uses bru.setVar and/or bru.setNextRequest to chain authorize->token->userinfo->revoke"},
+    {"name": "authorize-tests", "description": "Tests for POST /oauth/authorize with assertions on code and state in response"},
+    {"name": "token-exchange-tests", "description": "Tests for POST /oauth/token exchanging auth code for tokens"},
+    {"name": "userinfo-tests", "description": "Tests for GET /oauth/userinfo using Bearer access_token"},
+    {"name": "revoke-tests", "description": "Tests for POST /oauth/revoke"},
+    {"name": "revoked-token-fails", "description": "Test verifying that using a revoked token returns 401"},
+    {"name": "error-cases", "description": "At least one error case test (invalid client_id, expired code, etc.)"},
+    {"name": "env-var-credentials", "description": "CLIENT_ID and CLIENT_SECRET loaded from environment variables, not hardcoded"}
+  ]
+}

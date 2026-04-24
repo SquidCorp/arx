@@ -1,0 +1,25 @@
+version: "1"
+name: Create Post - Missing Body
+type: http
+seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  headers:
+    Content-Type: application/json
+    Authorization: "Bearer {{apiToken}}"
+  body:
+    type: json
+    content: |
+      {
+        "title": "Post Without Body",
+        "authorId": "{{authorId}}"
+      }
+
+assertions:
+  - type: status
+    value: 400
+  - type: jsonpath
+    expression: $.error
+    operator: isDefined

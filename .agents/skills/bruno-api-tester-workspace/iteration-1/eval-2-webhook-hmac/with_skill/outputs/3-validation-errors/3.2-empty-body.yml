@@ -1,0 +1,24 @@
+info:
+  name: "3.2 Empty request body"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhooks/payment"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+        const secret = bru.getProcessEnv('WEBHOOK_SECRET');
+        const signature = crypto.createHmac('sha256', secret)
+          .update('')
+          .digest('hex');
+        req.setHeader('X-Webhook-Signature', signature);
+    - type: tests
+      code: |-
+        test("should return 400 for empty body", function() {
+          expect(res.status).to.equal(400);
+        });

@@ -1,0 +1,23 @@
+meta:
+  name: Invalid JSON Body
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhooks/payment"
+  body: text
+  auth: none
+
+headers:
+  Content-Type: application/json
+  X-Webhook-Signature: "dummy-signature"
+
+body:
+  text: |
+    {invalid json content, not parseable
+
+tests: |
+  test("should return 400 for invalid JSON", () => {
+    expect(res.getStatus()).to.equal(400);
+  });

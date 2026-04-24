@@ -1,0 +1,26 @@
+info:
+  name: "3.0 Setup - create post for update tests"
+  type: http
+  seq: 0
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Update Test Post",
+        "body": "Original body content.",
+        "authorId": "550e8400-e29b-41d4-a716-446655440000"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("setup: should create post for update tests", function() {
+          expect(res.status).to.equal(201);
+        });
+        bru.setVar("updatePostId", res.body.id);
+        bru.setVar("originalCreatedAt", res.body.createdAt);

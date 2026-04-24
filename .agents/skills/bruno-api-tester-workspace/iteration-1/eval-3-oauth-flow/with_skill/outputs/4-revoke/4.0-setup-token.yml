@@ -1,0 +1,42 @@
+info:
+  name: "4.0 Setup - obtain token for revocation"
+  type: http
+  seq: 0
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/authorize"
+  body:
+    type: json
+    data: |-
+      {
+        "client_id": "{{clientId}}",
+        "redirect_uri": "http://localhost:3000/callback",
+        "scope": "openid profile email",
+        "state": "e2e-revoke-setup"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("setup: should obtain authorization code", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body).to.have.property("code");
+        });
+
+        // Exchange for tokens
+        const tokenRes = await bru.sendRequest({
+          method: "POST",
+          url: bru.interpolate("{{baseUrl}}") + "/oauth/token",
+          headers: { "Content-Type": "application/json" },
+          data: {
+            grant_type: "authorization_code",
+            code: res.body.code,
+            client_id: bru.interpolate("{{clientId}}"),
+            client_secret: bru.interpolate("{{clientSecret}}")
+          }
+        });
+
+        bru.setVar("revokeAccessToken", tokenRes.data.access_token);
+        bru.setVar("revokeRefreshToken", tokenRes.data.refresh_token);

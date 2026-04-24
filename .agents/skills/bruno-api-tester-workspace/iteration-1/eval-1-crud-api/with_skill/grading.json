@@ -1,0 +1,60 @@
+{
+  "run_id": "eval-1-with_skill",
+  "expectations": [
+    {
+      "text": "has-opencollection-yml",
+      "passed": true,
+      "evidence": "opencollection.yml exists with info.name: 'Blog Posts CRUD API', info.version: '1', info.type: 'collection'"
+    },
+    {
+      "text": "has-env-sample",
+      "passed": true,
+      "evidence": ".env.sample exists with API_TOKEN=your-api-token-here and BASE_URL placeholders"
+    },
+    {
+      "text": "has-gitignore",
+      "passed": true,
+      "evidence": ".gitignore contains '.env'"
+    },
+    {
+      "text": "has-environment-file",
+      "passed": true,
+      "evidence": "environments/local.yml exists with vars.baseUrl: '{{process.env.BASE_URL}}' and vars.apiToken: '{{process.env.API_TOKEN}}'"
+    },
+    {
+      "text": "folder-level-auth",
+      "passed": true,
+      "evidence": "All folder.yml files contain before-request script with req.setHeader('Authorization', `Bearer ${token}`) using bru.getEnvVar('apiToken')"
+    },
+    {
+      "text": "happy-path-coverage",
+      "passed": true,
+      "evidence": "Happy path tests exist: 1.1-happy-path.yml (POST 201), 2.1-happy-path.yml (GET 200), 3.1-happy-path.yml (PUT 200), 4.1-happy-path.yml (DELETE 200/204)"
+    },
+    {
+      "text": "error-case-coverage",
+      "passed": true,
+      "evidence": "1.2-missing-title.yml expects 400/422, 1.3-missing-body.yml expects 400/422, 1.5-invalid-author-id.yml expects 400/422 with author reference"
+    },
+    {
+      "text": "404-coverage",
+      "passed": true,
+      "evidence": "2.2-not-found.yml, 3.5-not-found.yml, 4.3-not-found.yml all assert expect(res.status).to.equal(404)"
+    },
+    {
+      "text": "uses-opencollection-yaml",
+      "passed": true,
+      "evidence": "All test files use YAML format with info/http/runtime keys (e.g., 1.1-happy-path.yml has info.name, http.method, runtime.scripts)"
+    },
+    {
+      "text": "state-sharing",
+      "passed": true,
+      "evidence": "1.1-happy-path.yml calls bru.setVar('createdPostId', res.body.id); setup files like 2.0-setup-create-post.yml call bru.setVar('readPostId', res.body.id) for use in subsequent tests"
+    },
+    {
+      "text": "correct-assertions",
+      "passed": true,
+      "evidence": "Tests use Chai expect() throughout, e.g., expect(res.status).to.equal(201), expect(res.body).to.have.property('id'), expect(res.body.title).to.equal('E2E Test Post')"
+    }
+  ]
+}

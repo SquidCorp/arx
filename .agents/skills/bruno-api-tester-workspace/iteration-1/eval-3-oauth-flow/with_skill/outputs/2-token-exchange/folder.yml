@@ -1,0 +1,12 @@
+info:
+  name: 2 - Token Exchange
+  description: >-
+    Tests for POST /oauth/token — exchanging an authorization code for
+    access and refresh tokens using client credentials.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // No shared auth header needed; client credentials go in the body.
+        req.setHeader('Content-Type', 'application/json');

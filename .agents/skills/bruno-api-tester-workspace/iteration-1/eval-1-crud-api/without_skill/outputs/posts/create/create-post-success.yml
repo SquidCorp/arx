@@ -1,0 +1,47 @@
+version: "1"
+name: Create Post - Success
+type: http
+seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  headers:
+    Content-Type: application/json
+    Authorization: "Bearer {{apiToken}}"
+  body:
+    type: json
+    content: |
+      {
+        "title": "My First Blog Post",
+        "body": "This is the content of my first blog post. It covers many interesting topics.",
+        "authorId": "{{authorId}}"
+      }
+
+assertions:
+  - type: status
+    value: 201
+  - type: jsonpath
+    expression: $.id
+    operator: isDefined
+  - type: jsonpath
+    expression: $.title
+    value: "My First Blog Post"
+  - type: jsonpath
+    expression: $.body
+    value: "This is the content of my first blog post. It covers many interesting topics."
+  - type: jsonpath
+    expression: $.authorId
+    value: "{{authorId}}"
+  - type: jsonpath
+    expression: $.createdAt
+    operator: isDefined
+  - type: jsonpath
+    expression: $.updatedAt
+    operator: isDefined
+
+scripts:
+  post-response: |
+    if (res.status === 201) {
+      bru.setVar("postId", res.body.id);
+    }

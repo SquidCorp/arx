@@ -1,0 +1,28 @@
+info:
+  name: "3.2 Update post - missing title"
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/posts/{{updatePostId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "body": "Updated body without title.",
+        "authorId": "550e8400-e29b-41d4-a716-446655440000"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400 for missing title on update", function() {
+          expect(res.status).to.be.oneOf([400, 422]);
+        });
+
+        test("should reference title in error", function() {
+          const raw = JSON.stringify(res.body).toLowerCase();
+          expect(raw).to.include("title");
+        });

@@ -1,0 +1,15 @@
+{
+  "eval_id": 2,
+  "eval_name": "webhook-hmac-signature",
+  "prompt": "Create Bruno tests for a Stripe-like webhook receiver at POST /webhooks/payment. It requires HMAC-SHA256 signature in X-Webhook-Signature header computed as hex digest of the raw JSON body using the secret from env var WEBHOOK_SECRET. Events: payment.completed, payment.failed, payment.refunded. Returns 400 for invalid JSON, 401 for bad/missing signature, 409 for duplicate event ID. Base URL http://localhost:4000.",
+  "assertions": [
+    {"name": "has-opencollection-yml", "description": "opencollection.yml exists with correct structure"},
+    {"name": "hmac-signing-script", "description": "Folder-level before-request script computes HMAC-SHA256 using crypto module and WEBHOOK_SECRET env var"},
+    {"name": "event-type-coverage", "description": "Separate test files for payment.completed, payment.failed, and payment.refunded"},
+    {"name": "missing-signature-test", "description": "Test asserting 401 when X-Webhook-Signature header is missing"},
+    {"name": "wrong-signature-test", "description": "Test asserting 401 when signature is invalid"},
+    {"name": "malformed-json-test", "description": "Test asserting 400 on malformed/invalid JSON body"},
+    {"name": "duplicate-event-test", "description": "Test asserting 409 on duplicate event ID"},
+    {"name": "uses-env-vars", "description": "WEBHOOK_SECRET loaded from environment variable, not hardcoded in scripts"}
+  ]
+}

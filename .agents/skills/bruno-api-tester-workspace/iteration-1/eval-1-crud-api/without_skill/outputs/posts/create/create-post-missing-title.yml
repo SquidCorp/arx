@@ -1,0 +1,25 @@
+version: "1"
+name: Create Post - Missing Title
+type: http
+seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  headers:
+    Content-Type: application/json
+    Authorization: "Bearer {{apiToken}}"
+  body:
+    type: json
+    content: |
+      {
+        "body": "This post has no title.",
+        "authorId": "{{authorId}}"
+      }
+
+assertions:
+  - type: status
+    value: 400
+  - type: jsonpath
+    expression: $.error
+    operator: isDefined

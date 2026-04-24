@@ -1,0 +1,14 @@
+version: "1"
+name: Delete Post - Success
+type: http
+seq: 1
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/posts/{{postId}}"
+  headers:
+    Authorization: "Bearer {{apiToken}}"
+
+assertions:
+  - type: status
+    value: 204

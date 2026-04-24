@@ -1,0 +1,36 @@
+info:
+  name: "3.4 Missing event ID field"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhooks/payment"
+  body:
+    type: json
+    data: |-
+      {
+        "type": "payment.completed",
+        "data": {
+          "payment_id": "pay_noid",
+          "amount": 1000,
+          "currency": "usd"
+        }
+      }
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+        const secret = bru.getProcessEnv('WEBHOOK_SECRET');
+        const body = req.getBody() ? JSON.stringify(req.getBody()) : '';
+        const signature = crypto.createHmac('sha256', secret)
+          .update(body)
+          .digest('hex');
+        req.setHeader('X-Webhook-Signature', signature);
+    - type: tests
+      code: |-
+        test("should return 400 when event ID is missing", function() {
+          expect(res.status).to.equal(400);
+        });

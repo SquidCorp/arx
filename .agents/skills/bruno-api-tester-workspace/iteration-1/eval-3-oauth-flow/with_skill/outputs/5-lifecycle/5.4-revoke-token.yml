@@ -1,0 +1,22 @@
+info:
+  name: "5.4 Lifecycle - revoke token"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/revoke"
+  body:
+    type: json
+    data: |-
+      {
+        "token": "{{lcAccessToken}}"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("lifecycle: should return 204 on revocation", function() {
+          expect(res.status).to.equal(204);
+        });

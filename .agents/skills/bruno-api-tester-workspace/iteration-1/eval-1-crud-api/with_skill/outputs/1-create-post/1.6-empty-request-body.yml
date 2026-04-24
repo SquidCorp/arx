@@ -1,0 +1,20 @@
+info:
+  name: "1.6 Create post - empty request body"
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  body:
+    type: json
+    data: |-
+      {}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400 for empty body", function() {
+          expect(res.status).to.be.oneOf([400, 422]);
+        });

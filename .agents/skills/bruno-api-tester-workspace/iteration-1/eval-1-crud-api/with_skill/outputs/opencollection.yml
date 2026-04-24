@@ -1,0 +1,16 @@
+info:
+  name: Blog Posts CRUD API
+  version: "1"
+  type: collection
+  description: End-to-end tests for the Blog Posts REST API covering CRUD operations, validation errors, and 404 handling.
+
+settings:
+  timeout: 5000
+  sslVerification: false
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Collection-level pre-request: no-op.
+        // Auth is handled per-folder via Bearer token injection.

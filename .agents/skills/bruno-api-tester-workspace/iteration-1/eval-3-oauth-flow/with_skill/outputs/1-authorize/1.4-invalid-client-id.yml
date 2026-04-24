@@ -1,0 +1,29 @@
+info:
+  name: "1.4 Authorize - invalid client_id"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/authorize"
+  body:
+    type: json
+    data: |-
+      {
+        "client_id": "nonexistent-client-id",
+        "redirect_uri": "http://localhost:3000/callback",
+        "scope": "openid profile email",
+        "state": "e2e-authorize-state-4"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 401 for invalid client_id", function() {
+          expect(res.status).to.be.oneOf([400, 401]);
+        });
+
+        test("should include an error description", function() {
+          expect(res.body).to.have.property("error");
+        });

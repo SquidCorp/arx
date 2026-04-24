@@ -1,0 +1,39 @@
+info:
+  name: "1.1 Authorize - happy path"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/authorize"
+  body:
+    type: json
+    data: |-
+      {
+        "client_id": "{{clientId}}",
+        "redirect_uri": "http://localhost:3000/callback",
+        "scope": "openid profile email",
+        "state": "e2e-authorize-state-1"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return an authorization code", function() {
+          expect(res.body).to.have.property("code");
+          expect(res.body.code).to.be.a("string");
+          expect(res.body.code.length).to.be.greaterThan(0);
+        });
+
+        test("should echo back the state parameter", function() {
+          expect(res.body).to.have.property("state");
+          expect(res.body.state).to.equal("e2e-authorize-state-1");
+        });
+
+        // Store the code for downstream tests
+        bru.setVar("authCode", res.body.code);

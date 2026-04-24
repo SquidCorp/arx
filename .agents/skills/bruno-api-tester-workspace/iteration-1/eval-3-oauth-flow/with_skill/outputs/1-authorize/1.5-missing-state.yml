@@ -1,0 +1,28 @@
+info:
+  name: "1.5 Authorize - missing state"
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/authorize"
+  body:
+    type: json
+    data: |-
+      {
+        "client_id": "{{clientId}}",
+        "redirect_uri": "http://localhost:3000/callback",
+        "scope": "openid profile email"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400 for missing state (CSRF protection)", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should include an error description", function() {
+          expect(res.body).to.have.property("error");
+        });

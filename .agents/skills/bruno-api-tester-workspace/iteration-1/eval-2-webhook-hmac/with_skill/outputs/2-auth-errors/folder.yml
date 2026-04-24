@@ -1,0 +1,13 @@
+info:
+  name: 2 - Auth Errors
+  description: >-
+    Validates that the webhook receiver rejects requests with missing or
+    invalid HMAC-SHA256 signatures with a 401 status code.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // No automatic signing in this folder.
+        // Each test controls its own signature (or lack thereof).
+        req.setHeader('Content-Type', 'application/json');

@@ -1,0 +1,45 @@
+{
+  "run_id": "eval-2-without_skill",
+  "expectations": [
+    {
+      "text": "has-opencollection-yml",
+      "passed": true,
+      "evidence": "opencollection.yml exists with name: Webhook Payment Receiver, version: 1, type: collection"
+    },
+    {
+      "text": "hmac-signing-script",
+      "passed": false,
+      "evidence": "No folder-level before-request script exists. HMAC signing is duplicated inline in each individual test file's script.pre-request block instead of a shared folder-level script."
+    },
+    {
+      "text": "event-type-coverage",
+      "passed": true,
+      "evidence": "Separate test files exist: payment-completed/payment-completed.yml (payment.completed), payment-failed/payment-failed.yml (payment.failed), payment-refunded/payment-refunded.yml (payment.refunded)"
+    },
+    {
+      "text": "missing-signature-test",
+      "passed": true,
+      "evidence": "missing-signature/missing-signature.yml asserts: expect(res.getStatus()).to.equal(401) and omits X-Webhook-Signature header"
+    },
+    {
+      "text": "wrong-signature-test",
+      "passed": true,
+      "evidence": "invalid-signature/invalid-signature.yml sends hardcoded wrong signature 'deadbeef...' and asserts expect(res.getStatus()).to.equal(401)"
+    },
+    {
+      "text": "malformed-json-test",
+      "passed": true,
+      "evidence": "invalid-json/invalid-json.yml sends body type: text with '{invalid json content, not parseable' and asserts expect(res.getStatus()).to.equal(400)"
+    },
+    {
+      "text": "duplicate-event-test",
+      "passed": true,
+      "evidence": "duplicate-event/duplicate-event.yml reuses evt_payment_completed_001 ID and asserts expect(res.getStatus()).to.equal(409)"
+    },
+    {
+      "text": "uses-env-vars",
+      "passed": true,
+      "evidence": "All HMAC scripts use bru.getEnvVar('webhookSecret') to load the secret; environments/local.yml defines webhookSecret as a secret variable. No hardcoded secret in scripts."
+    }
+  ]
+}

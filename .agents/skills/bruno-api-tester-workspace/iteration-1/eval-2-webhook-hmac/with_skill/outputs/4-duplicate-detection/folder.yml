@@ -1,0 +1,18 @@
+info:
+  name: 4 - Duplicate Detection
+  description: >-
+    Validates that the webhook receiver returns 409 when the same event ID
+    is submitted more than once (idempotency guard).
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+        const secret = bru.getProcessEnv('WEBHOOK_SECRET');
+        const body = req.getBody() ? JSON.stringify(req.getBody()) : '';
+        const signature = crypto.createHmac('sha256', secret)
+          .update(body)
+          .digest('hex');
+        req.setHeader('X-Webhook-Signature', signature);
+        req.setHeader('Content-Type', 'application/json');

@@ -1,0 +1,22 @@
+info:
+  name: "4.1 Revoke - happy path"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/revoke"
+  body:
+    type: json
+    data: |-
+      {
+        "token": "{{revokeAccessToken}}"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 204 on successful revocation", function() {
+          expect(res.status).to.equal(204);
+        });

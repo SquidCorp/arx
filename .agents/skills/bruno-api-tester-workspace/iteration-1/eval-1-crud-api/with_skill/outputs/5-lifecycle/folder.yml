@@ -1,0 +1,11 @@
+info:
+  name: 5 - Lifecycle
+  description: Full CRUD lifecycle sequence - create, read, update, verify update, delete, verify deletion.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const token = bru.getEnvVar('apiToken');
+        req.setHeader('Authorization', `Bearer ${token}`);
+        req.setHeader('Content-Type', 'application/json');

@@ -1,0 +1,28 @@
+info:
+  name: "3.3 Update post - missing body field"
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/posts/{{updatePostId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Title Without Body",
+        "authorId": "550e8400-e29b-41d4-a716-446655440000"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400 for missing body field on update", function() {
+          expect(res.status).to.be.oneOf([400, 422]);
+        });
+
+        test("should reference body in error", function() {
+          const raw = JSON.stringify(res.body).toLowerCase();
+          expect(raw).to.include("body");
+        });

@@ -1,0 +1,10 @@
+info:
+  name: 4 - Token Revocation
+  description: >-
+    Tests for POST /oauth/revoke — revoking an access or refresh token.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        req.setHeader('Content-Type', 'application/json');

@@ -1,0 +1,38 @@
+info:
+  name: "3.1 Update post - happy path"
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/posts/{{updatePostId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Updated Title",
+        "body": "Updated body content.",
+        "authorId": "550e8400-e29b-41d4-a716-446655440000"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200 OK", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should reflect the updated title and body", function() {
+          expect(res.body.title).to.equal("Updated Title");
+          expect(res.body.body).to.equal("Updated body content.");
+        });
+
+        test("should preserve the post id", function() {
+          expect(res.body.id).to.equal(bru.getVar("updatePostId"));
+        });
+
+        test("should have updatedAt different from or equal to createdAt", function() {
+          expect(res.body).to.have.property("updatedAt");
+          expect(res.body.updatedAt).to.be.a("string");
+        });

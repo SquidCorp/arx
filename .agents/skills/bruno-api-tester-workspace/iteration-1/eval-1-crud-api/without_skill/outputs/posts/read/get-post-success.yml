@@ -1,0 +1,32 @@
+version: "1"
+name: Get Post - Success
+type: http
+seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/posts/{{postId}}"
+  headers:
+    Authorization: "Bearer {{apiToken}}"
+
+assertions:
+  - type: status
+    value: 200
+  - type: jsonpath
+    expression: $.id
+    value: "{{postId}}"
+  - type: jsonpath
+    expression: $.title
+    operator: isDefined
+  - type: jsonpath
+    expression: $.body
+    operator: isDefined
+  - type: jsonpath
+    expression: $.authorId
+    operator: isDefined
+  - type: jsonpath
+    expression: $.createdAt
+    operator: isDefined
+  - type: jsonpath
+    expression: $.updatedAt
+    operator: isDefined

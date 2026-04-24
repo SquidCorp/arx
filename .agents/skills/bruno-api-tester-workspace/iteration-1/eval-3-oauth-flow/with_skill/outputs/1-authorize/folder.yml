@@ -1,0 +1,12 @@
+info:
+  name: 1 - Authorization Code Request
+  description: >-
+    Tests for POST /oauth/authorize — requesting an authorization code
+    with client credentials, redirect URI, scope, and state.
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // No shared auth needed for the authorize endpoint.
+        req.setHeader('Content-Type', 'application/json');

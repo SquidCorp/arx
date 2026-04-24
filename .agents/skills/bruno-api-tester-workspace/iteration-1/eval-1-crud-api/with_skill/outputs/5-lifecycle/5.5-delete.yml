@@ -1,0 +1,16 @@
+info:
+  name: "5.5 Lifecycle - delete post"
+  type: http
+  seq: 5
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/posts/{{lifecyclePostId}}"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("lifecycle: should delete post", function() {
+          expect(res.status).to.be.oneOf([200, 204]);
+        });

@@ -1,0 +1,22 @@
+info:
+  name: "4.4 Revoke - idempotent for already-revoked token"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/revoke"
+  body:
+    type: json
+    data: |-
+      {
+        "token": "{{revokeAccessToken}}"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 204 even for already-revoked token (idempotent)", function() {
+          expect(res.status).to.equal(204);
+        });

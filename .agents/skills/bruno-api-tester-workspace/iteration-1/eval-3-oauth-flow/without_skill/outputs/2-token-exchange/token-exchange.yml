@@ -1,0 +1,42 @@
+meta:
+  name: Token Exchange
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{base_url}}/oauth/token"
+  body: json
+  auth: none
+
+body:
+  json: |
+    {
+      "grant_type": "authorization_code",
+      "code": "{{auth_code}}",
+      "client_id": "{{client_id}}",
+      "client_secret": "{{client_secret}}"
+    }
+
+assertions:
+  - type: status
+    value: 200
+  - type: isJson
+  - type: jsonBody
+    path: access_token
+    op: isDefined
+  - type: jsonBody
+    path: refresh_token
+    op: isDefined
+  - type: jsonBody
+    path: expires_in
+    op: isNumber
+  - type: jsonBody
+    path: token_type
+    value: "Bearer"
+
+scripts:
+  post-response: |
+    const body = res.getBody();
+    bru.setVar("access_token", body.access_token);
+    bru.setVar("refresh_token", body.refresh_token);

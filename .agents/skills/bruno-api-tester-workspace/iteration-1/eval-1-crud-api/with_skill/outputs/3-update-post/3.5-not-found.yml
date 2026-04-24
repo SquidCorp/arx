@@ -1,0 +1,24 @@
+info:
+  name: "3.5 Update post - not found"
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/posts/00000000-0000-0000-0000-000000000000"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Ghost Post",
+        "body": "Trying to update a nonexistent post.",
+        "authorId": "550e8400-e29b-41d4-a716-446655440000"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 404 for nonexistent post", function() {
+          expect(res.status).to.equal(404);
+        });

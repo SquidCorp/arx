@@ -1,0 +1,50 @@
+{
+  "run_id": "eval-3-with_skill",
+  "expectations": [
+    {
+      "text": "has-opencollection-yml",
+      "passed": true,
+      "evidence": "opencollection.yml exists with info.name, info.version, info.type: collection, settings, and runtime sections"
+    },
+    {
+      "text": "lifecycle-chaining",
+      "passed": true,
+      "evidence": "5-lifecycle folder chains authorize->token->userinfo->revoke->verify via bru.setVar: lcAuthCode in 5.1, lcAccessToken/lcRefreshToken in 5.2, used in 5.3/5.4/5.5"
+    },
+    {
+      "text": "authorize-tests",
+      "passed": true,
+      "evidence": "1-authorize/1.1-happy-path.yml: POST /oauth/authorize with assertions on res.body.code (string, length>0) and res.body.state matching expected value"
+    },
+    {
+      "text": "token-exchange-tests",
+      "passed": true,
+      "evidence": "2-token-exchange/2.1-happy-path.yml: POST /oauth/token with grant_type authorization_code, asserts access_token, refresh_token, expires_in, token_type Bearer"
+    },
+    {
+      "text": "userinfo-tests",
+      "passed": true,
+      "evidence": "3-userinfo/3.1-happy-path.yml: GET /oauth/userinfo; folder.yml injects Bearer token via bru.getVar('accessToken') in before-request script"
+    },
+    {
+      "text": "revoke-tests",
+      "passed": true,
+      "evidence": "4-revoke/4.1-happy-path.yml: POST /oauth/revoke with token body, asserts status 204"
+    },
+    {
+      "text": "revoked-token-fails",
+      "passed": true,
+      "evidence": "4-revoke/4.2-verify-revoked-token-fails.yml: GET /oauth/userinfo with revoked token, asserts status 401 and error property. Also 5-lifecycle/5.5 does the same."
+    },
+    {
+      "text": "error-cases",
+      "passed": true,
+      "evidence": "Multiple error cases: 1.2-missing-client-id (400), 1.3-missing-redirect-uri, 1.4-invalid-client-id, 1.5-missing-state, 2.2-invalid-code, 2.3-missing-client-secret, 2.4-wrong-grant-type, 2.5-wrong-client-secret, 3.2-missing-token, 3.3-invalid-token, 4.3-missing-token, 4.4-revoke-already-revoked"
+    },
+    {
+      "text": "env-var-credentials",
+      "passed": true,
+      "evidence": "environments/local.yml: clientId uses '{{process.env.CLIENT_ID}}' and clientSecret uses '{{process.env.CLIENT_SECRET}}'; .env.sample documents CLIENT_ID and CLIENT_SECRET placeholders"
+    }
+  ]
+}

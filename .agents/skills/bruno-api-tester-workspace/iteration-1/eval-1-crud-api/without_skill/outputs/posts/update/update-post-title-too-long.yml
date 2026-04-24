@@ -1,0 +1,26 @@
+version: "1"
+name: Update Post - Title Exceeds 200 Characters
+type: http
+seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/posts/{{postId}}"
+  headers:
+    Content-Type: application/json
+    Authorization: "Bearer {{apiToken}}"
+  body:
+    type: json
+    content: |
+      {
+        "title": "This title is deliberately made to exceed the two hundred character limit that is enforced by the API validation rules so that we can verify the server correctly rejects posts with titles that are too long for storage",
+        "body": "Valid body content.",
+        "authorId": "{{authorId}}"
+      }
+
+assertions:
+  - type: status
+    value: 400
+  - type: jsonpath
+    expression: $.error
+    operator: isDefined

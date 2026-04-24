@@ -1,0 +1,26 @@
+version: "1"
+name: Create Post - Invalid Author ID
+type: http
+seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  headers:
+    Content-Type: application/json
+    Authorization: "Bearer {{apiToken}}"
+  body:
+    type: json
+    content: |
+      {
+        "title": "Post With Bad Author",
+        "body": "Valid body content.",
+        "authorId": "not-a-valid-uuid"
+      }
+
+assertions:
+  - type: status
+    value: 400
+  - type: jsonpath
+    expression: $.error
+    operator: isDefined

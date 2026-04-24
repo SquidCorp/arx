@@ -1,0 +1,49 @@
+info:
+  name: "1.1 Create post - happy path"
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "E2E Test Post",
+        "body": "This is the body of the test post.",
+        "authorId": "550e8400-e29b-41d4-a716-446655440000"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 201 Created", function() {
+          expect(res.status).to.equal(201);
+        });
+
+        test("should return post with an id", function() {
+          expect(res.body).to.have.property("id");
+          expect(res.body.id).to.be.a("string");
+        });
+
+        test("should return the submitted title and body", function() {
+          expect(res.body.title).to.equal("E2E Test Post");
+          expect(res.body.body).to.equal("This is the body of the test post.");
+        });
+
+        test("should return the authorId as a UUID", function() {
+          expect(res.body.authorId).to.equal("550e8400-e29b-41d4-a716-446655440000");
+          expect(res.body.authorId).to.match(/^[0-9a-f-]{36}$/);
+        });
+
+        test("should include timestamps", function() {
+          expect(res.body).to.have.property("createdAt");
+          expect(res.body.createdAt).to.be.a("string");
+          expect(res.body).to.have.property("updatedAt");
+          expect(res.body.updatedAt).to.be.a("string");
+        });
+
+        // Store the created post ID for downstream tests
+        bru.setVar("createdPostId", res.body.id);

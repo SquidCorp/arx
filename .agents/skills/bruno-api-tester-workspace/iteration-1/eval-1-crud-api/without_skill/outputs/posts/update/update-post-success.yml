@@ -1,0 +1,35 @@
+version: "1"
+name: Update Post - Success
+type: http
+seq: 1
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/posts/{{postId}}"
+  headers:
+    Content-Type: application/json
+    Authorization: "Bearer {{apiToken}}"
+  body:
+    type: json
+    content: |
+      {
+        "title": "Updated Blog Post Title",
+        "body": "This is the updated content of the blog post.",
+        "authorId": "{{authorId}}"
+      }
+
+assertions:
+  - type: status
+    value: 200
+  - type: jsonpath
+    expression: $.id
+    value: "{{postId}}"
+  - type: jsonpath
+    expression: $.title
+    value: "Updated Blog Post Title"
+  - type: jsonpath
+    expression: $.body
+    value: "This is the updated content of the blog post."
+  - type: jsonpath
+    expression: $.updatedAt
+    operator: isDefined

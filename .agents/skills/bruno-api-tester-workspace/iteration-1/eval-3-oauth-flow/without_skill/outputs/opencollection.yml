@@ -1,0 +1,3 @@
+version: "1"
+name: OAuth2 Authorization Code Flow
+type: collection
