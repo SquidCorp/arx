@@ -137,6 +137,25 @@ func (km *LocalKeyManager) GenerateSigningKeypair(_ context.Context, dekEnc []by
 	return pub, privEnc, nil
 }
 
+// SignJWT signs the JWT signing input using the tenant's Ed25519 signing key.
+// The decrypted private key is zeroed after use.
+func (km *LocalKeyManager) SignJWT(_ context.Context, keys TenantKeys, signingInput []byte) ([]byte, error) {
+	dek, err := km.decryptAESGCM(km.masterKey, keys.DEKEnc)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt DEK: %w", err)
+	}
+	defer zeroBytes(dek)
+
+	privKey, err := km.decryptAESGCM(dek, keys.ArxSigningPrivateKeyEnc)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt signing key: %w", err)
+	}
+	defer zeroBytes(privKey)
+
+	sig := ed25519.Sign(ed25519.PrivateKey(privKey), signingInput)
+	return sig, nil
+}
+
 // encryptAESGCM encrypts plaintext with a 32-byte key using AES-256-GCM.
 // Returns nonce || ciphertext.
 func (km *LocalKeyManager) encryptAESGCM(key, plaintext []byte) ([]byte, error) {

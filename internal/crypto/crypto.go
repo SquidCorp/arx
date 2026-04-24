@@ -69,4 +69,8 @@ type KeyManager interface {
 	// GenerateSigningKeypair generates a new Ed25519 signing keypair.
 	// Returns the public key and the private key encrypted with the given DEK.
 	GenerateSigningKeypair(ctx context.Context, dekEnc []byte) (publicKey ed25519.PublicKey, privateKeyEnc []byte, err error)
+
+	// SignJWT signs the JWT signing input using the tenant's Ed25519 signing key.
+	// The decrypted private key is zeroed after use.
+	SignJWT(ctx context.Context, keys TenantKeys, signingInput []byte) ([]byte, error)
 }

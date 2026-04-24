@@ -36,12 +36,12 @@
 
 ## 5. DPoP Token System
 
-- [ ] 5.1 Implement DPoP proof JWT parsing and validation (signature, thumbprint, ath, iat freshness, htm, htu)
-- [ ] 5.2 Implement DPoP nonce deduplication via Redis (jti uniqueness check, SET NX with 5-min TTL)
-- [ ] 5.3 Implement access token JWT issuance — EdDSA signed, with iss, sub, aud, exp, iat, cnf.jkt, scope, tenant claims
-- [ ] 5.4 Implement refresh token JWT issuance (longer expiry, session reference)
-- [ ] 5.5 Implement `POST /token/bind` — validate bind-code (60s TTL, single-use), require DPoP proof, issue bound token
-- [ ] 5.6 Implement access token validation middleware — verify signature, extract session, check expiry
+- [x] 5.1 Implement DPoP proof JWT parsing and validation (signature, thumbprint, ath, iat freshness, htm, htu)
+- [x] 5.2 Implement DPoP nonce deduplication via Redis (jti uniqueness check, SET NX with 5-min TTL)
+- [x] 5.3 Implement access token JWT issuance — EdDSA signed, with iss, sub, aud, exp, iat, cnf.jkt, scope, tenant claims
+- [x] 5.4 Implement refresh token JWT issuance (longer expiry, session reference)
+- [x] 5.5 Implement `POST /token/bind` — validate bind-code (60s TTL, single-use), require DPoP proof, issue bound token
+- [x] 5.6 Implement access token validation middleware — verify signature, extract session, check expiry
 
 ## 6. OAuth 2.1 Flow (Flow 1)
 

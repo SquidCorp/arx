@@ -124,3 +124,72 @@ func TestSignRequest_WrongDEK(t *testing.T) {
 		t.Error("expected error when DEK doesn't match the encrypted signing key")
 	}
 }
+
+func TestSignJWT_RoundTrip(t *testing.T) {
+	km, err := NewLocalKeyManager(testMasterKey(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := t.Context()
+	keys := testTenantKeys(t, km)
+
+	signingInput := []byte("header.payload")
+
+	sig, err := km.SignJWT(ctx, keys, signingInput)
+	if err != nil {
+		t.Fatalf("sign jwt failed: %v", err)
+	}
+
+	if !ed25519.Verify(keys.ArxSigningPublicKey, signingInput, sig) {
+		t.Error("JWT signature verification failed with the matching public key")
+	}
+}
+
+func TestSignJWT_Deterministic(t *testing.T) {
+	km, err := NewLocalKeyManager(testMasterKey(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := t.Context()
+	keys := testTenantKeys(t, km)
+
+	signingInput := []byte("test.input")
+
+	sig1, err := km.SignJWT(ctx, keys, signingInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sig2, err := km.SignJWT(ctx, keys, signingInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Ed25519 is deterministic.
+	if string(sig1) != string(sig2) {
+		t.Error("expected deterministic JWT signatures for same input and key")
+	}
+}
+
+func TestSignJWT_CrossTenantIsolation(t *testing.T) {
+	km, err := NewLocalKeyManager(testMasterKey(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := t.Context()
+
+	keys1 := testTenantKeys(t, km)
+	keys2 := testTenantKeys(t, km)
+
+	signingInput := []byte("header.payload")
+
+	sig1, err := km.SignJWT(ctx, keys1, signingInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Signature from tenant 1 should NOT verify with tenant 2's public key.
+	if ed25519.Verify(keys2.ArxSigningPublicKey, signingInput, sig1) {
+		t.Error("JWT signature from tenant 1 should not verify with tenant 2's public key")
+	}
+}

@@ -49,6 +49,10 @@ func NewConfig() (*river.Config, *river.Workers) {
 // Start initializes and starts the River worker client.
 // It runs River's schema migrations before starting the client.
 func Start(ctx context.Context, pool *pgxpool.Pool) (*river.Client[pgx.Tx], error) {
+	if pool == nil {
+		return nil, fmt.Errorf("database pool is required")
+	}
+
 	driver := riverpgxv5.New(pool)
 
 	migrator, err := rivermigrate.New(driver, nil)
