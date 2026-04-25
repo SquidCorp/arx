@@ -1,0 +1,26 @@
+info:
+  name: "8.8 Malformed JSON body"
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{baseUrl}}/token/bind"
+  body:
+    type: text
+    data: "not-json{{"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        req.setHeader('Content-Type', 'application/json');
+    - type: tests
+      code: |-
+        test("should return 400", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should return invalid_payload error", function() {
+          expect(res.body).to.have.property("error", "invalid_payload");
+        });

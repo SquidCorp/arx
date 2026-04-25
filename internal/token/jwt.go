@@ -70,6 +70,11 @@ func NewIssuer(config Config, keyManager crypto.KeyManager) *Issuer {
 	}
 }
 
+// Config returns the issuer's configuration.
+func (i *Issuer) Config() Config {
+	return i.config
+}
+
 // IssueAccessToken creates a new DPoP-bound access token.
 // The token is signed with the tenant's Ed25519 signing key.
 func (i *Issuer) IssueAccessToken(ctx context.Context, keys crypto.TenantKeys, sessionID, tenantID, thumbprint string, scopes []string, expiresAt time.Time) (string, error) {

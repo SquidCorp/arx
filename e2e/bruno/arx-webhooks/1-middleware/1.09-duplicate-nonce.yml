@@ -27,9 +27,10 @@ runtime:
         // Use a fixed nonce to test replay detection.
         // First run of this test will pass (201), second run within 5 min will get 401.
         const nonce = 'fixed-replay-nonce-e2e-test';
-        const body = JSON.stringify(req.getBody());
+        let body = JSON.stringify(req.getBody());
+        body = body.replace(/\{\{(\w+)\}\}/g, (m, name) => bru.getVar(name) || bru.getEnvVar(name) || m);
         const method = req.getMethod();
-        const url = new URL(req.getUrl());
+        const url = new URL(req.getUrl().replace(/\{\{baseUrl\}\}/g, bru.getEnvVar('baseUrl')));
         const path = url.pathname;
 
         const message = `${method}\n${path}\n${timestamp}\n${nonce}\n${body}`;

@@ -1,0 +1,83 @@
+info:
+  name: "8.1 Happy path — exchange bind code for DPoP token"
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/token/bind"
+  body:
+    type: json
+    data: |-
+      {"bind_code":"{{bindCode}}","dpop_proof":"{{dpopProof}}"}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+
+        // Generate an Ed25519 keypair for the DPoP proof.
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+
+        // Export raw public key (32 bytes) for the JWK.
+        const pubRaw = publicKey.export({ type: 'spki', format: 'der' });
+        // Ed25519 SPKI DER is 44 bytes; the last 32 are the raw key.
+        const pubBytes = pubRaw.subarray(pubRaw.length - 32);
+        const xB64 = pubBytes.toString('base64url');
+
+        // Build the DPoP JWT header + payload.
+        const header = {
+          typ: 'dpop+jwt',
+          alg: 'EdDSA',
+          jwk: { kty: 'OKP', crv: 'Ed25519', x: xB64 }
+        };
+
+        const rawUrl = req.getUrl().replace(/\{\{baseUrl\}\}/g, bru.getEnvVar('baseUrl'));
+        const url = new URL(rawUrl);
+
+        const payload = {
+          jti: crypto.randomUUID(),
+          htm: 'POST',
+          htu: `${url.origin}${url.pathname}`,
+          iat: Math.floor(Date.now() / 1000)
+        };
+
+        const encHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+        const encPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+        const sigInput = `${encHeader}.${encPayload}`;
+        const sig = crypto.sign(null, Buffer.from(sigInput), privateKey);
+        const dpopJwt = `${sigInput}.${sig.toString('base64url')}`;
+
+        // Override the body with the generated DPoP proof.
+        const bindCode = bru.getVar('bindCode');
+        req.setBody(JSON.stringify({ bind_code: bindCode, dpop_proof: dpopJwt }));
+        req.setHeader('Content-Type', 'application/json');
+
+        // Store keypair for downstream tests.
+        bru.setVar('dpopPrivateKeyHex', privateKey.export({ type: 'pkcs8', format: 'der' }).toString('hex'));
+        bru.setVar('dpopPublicX', xB64);
+    - type: tests
+      code: |-
+        test("should return 200 OK", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return access_token", function() {
+          expect(res.body).to.have.property("access_token");
+          expect(res.body.access_token).to.be.a("string");
+          expect(res.body.access_token.length).to.be.greaterThan(0);
+        });
+
+        test("should return token_type DPoP", function() {
+          expect(res.body).to.have.property("token_type", "DPoP");
+        });
+
+        test("should return positive expires_in", function() {
+          expect(res.body).to.have.property("expires_in");
+          expect(res.body.expires_in).to.be.a("number");
+          expect(res.body.expires_in).to.be.greaterThan(0);
+        });
+
+        bru.setVar("bindAccessToken", res.body.access_token);
+        bru.setVar("bindExpiresIn", res.body.expires_in);

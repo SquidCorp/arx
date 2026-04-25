@@ -160,7 +160,7 @@ func (v *Validator) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		thumbprint, err := ValidateDPoPProof(dpopProof, tokenStr, r.Method, r.URL.String(), v.nonceCheck)
+		thumbprint, err := ValidateDPoPProof(dpopProof, tokenStr, r.Method, RequestURL(r), v.nonceCheck)
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, "invalid_dpop_proof")
 			return

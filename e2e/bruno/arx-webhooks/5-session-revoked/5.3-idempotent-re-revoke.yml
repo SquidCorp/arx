@@ -13,6 +13,35 @@ http:
 
 runtime:
   scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+
+        const privateKeyHex = bru.getEnvVar('MERCHANT_PRIVATE_KEY');
+        const seed = Buffer.from(privateKeyHex, 'hex');
+        const pkcs8Prefix = Buffer.from('302e020100300506032b657004220420', 'hex');
+        const der = Buffer.concat([pkcs8Prefix, seed]);
+        const keyObject = crypto.createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
+
+        const timestamp = Math.floor(Date.now() / 1000).toString();
+        const nonce = crypto.randomUUID();
+        const bodyObj = req.getBody();
+        let body = bodyObj ? JSON.stringify(bodyObj) : '';
+        body = body.replace(/\{\{(\w+)\}\}/g, (m, name) => bru.getVar(name) || bru.getEnvVar(name) || m);
+        const method = req.getMethod();
+        const rawUrl = req.getUrl().replace(/\{\{baseUrl\}\}/g, bru.getEnvVar('baseUrl'));
+        const url = new URL(rawUrl);
+        const path = url.pathname;
+
+        const message = `${method}\n${path}\n${timestamp}\n${nonce}\n${body}`;
+        const signature = crypto.sign(null, Buffer.from(message), keyObject);
+        const signatureB64 = signature.toString('base64');
+
+        req.setHeader('Content-Type', 'application/json');
+        req.setHeader('X-Arx-Tenant-ID', bru.getEnvVar('TENANT_ID'));
+        req.setHeader('X-Arx-Signature', signatureB64);
+        req.setHeader('X-Arx-Timestamp', timestamp);
+        req.setHeader('X-Arx-Nonce', nonce);
     - type: tests
       code: |-
         test("should return 200 (idempotent)", function() {

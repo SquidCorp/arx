@@ -26,7 +26,7 @@ runtime:
         const timestamp = Math.floor(Date.now() / 1000).toString();
         const nonce = crypto.randomUUID();
         const method = req.getMethod();
-        const url = new URL(req.getUrl());
+        const url = new URL(req.getUrl().replace(/\{\{baseUrl\}\}/g, bru.getEnvVar('baseUrl')));
         const path = url.pathname;
 
         // Sign with ORIGINAL body, but the request will send the TAMPERED body.

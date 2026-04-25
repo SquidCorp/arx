@@ -19,7 +19,7 @@ runtime:
         const bodyObj = req.getBody();
         const body = bodyObj ? JSON.stringify(bodyObj) : '';
         const method = req.getMethod();
-        const url = new URL(req.getUrl());
+        const url = new URL(req.getUrl().replace(/\{\{baseUrl\}\}/g, bru.getEnvVar('baseUrl')));
         const path = url.pathname;
 
         const message = `${method}\n${path}\n${timestamp}\n${nonce}\n${body}`;

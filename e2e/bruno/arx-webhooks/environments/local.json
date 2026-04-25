@@ -1,0 +1,10 @@
+{
+  "name": "local",
+  "variables": [
+    { "name": "baseUrl", "value": "{{process.env.BASE_URL}}", "enabled": true, "secret": false, "type": "text" },
+    { "name": "tenantId", "value": "{{process.env.TENANT_ID}}", "enabled": true, "secret": false, "type": "text" },
+    { "name": "merchantPrivateKey", "value": "{{process.env.MERCHANT_PRIVATE_KEY}}", "enabled": true, "secret": true, "type": "text" },
+    { "name": "MERCHANT_PRIVATE_KEY", "value": "{{process.env.MERCHANT_PRIVATE_KEY}}", "enabled": true, "secret": true, "type": "text" },
+    { "name": "TENANT_ID", "value": "{{process.env.TENANT_ID}}", "enabled": true, "secret": false, "type": "text" }
+  ]
+}

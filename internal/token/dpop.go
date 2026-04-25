@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"net/url"
 	"path"
 	"strings"
@@ -194,6 +195,17 @@ func jwkThumbprint(jwkMap jwk) (string, error) {
 	canonical := fmt.Sprintf(`{"crv":"%s","kty":"%s","x":"%s"}`, jwkMap.Crv, jwkMap.Kty, jwkMap.X)
 	hash := sha256.Sum256([]byte(canonical))
 	return base64.RawURLEncoding.EncodeToString(hash[:]), nil
+}
+
+// RequestURL reconstructs the full request URL from an http.Request.
+// Go's http.Server only populates r.URL with path and query; the host
+// and scheme must be inferred from r.Host and r.TLS.
+func RequestURL(r *http.Request) string {
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	return scheme + "://" + r.Host + r.URL.RequestURI()
 }
 
 // matchHTU checks whether the claimed HTU matches the request URL.

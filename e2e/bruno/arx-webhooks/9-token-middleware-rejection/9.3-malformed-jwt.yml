@@ -1,0 +1,23 @@
+info:
+  name: "9.3 Malformed JWT in Authorization header"
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/resource"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        req.setHeader('Authorization', 'DPoP not-a-valid-jwt');
+    - type: tests
+      code: |-
+        test("should return 401", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("should return invalid_token error", function() {
+          expect(res.body).to.have.property("error", "invalid_token");
+        });

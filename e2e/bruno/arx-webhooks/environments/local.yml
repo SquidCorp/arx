@@ -5,3 +5,5 @@ vars:
   baseUrl: "{{process.env.BASE_URL}}"
   tenantId: "{{process.env.TENANT_ID}}"
   merchantPrivateKey: "{{process.env.MERCHANT_PRIVATE_KEY}}"
+  MERCHANT_PRIVATE_KEY: "{{process.env.MERCHANT_PRIVATE_KEY}}"
+  TENANT_ID: "{{process.env.TENANT_ID}}"

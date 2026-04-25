@@ -1,0 +1,25 @@
+info:
+  name: "9.7 Valid token but missing DPoP proof header"
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: "{{baseUrl}}/resource"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const token = bru.getVar('mwAccessToken');
+        req.setHeader('Authorization', `DPoP ${token}`);
+        // Deliberately omit the DPoP header.
+    - type: tests
+      code: |-
+        test("should return 401", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("should return missing_dpop_proof error", function() {
+          expect(res.body).to.have.property("error", "missing_dpop_proof");
+        });

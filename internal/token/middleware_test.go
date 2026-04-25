@@ -89,12 +89,12 @@ func TestValidatorMiddleware_ValidToken(t *testing.T) {
 			IssuedAt: jwt.NewNumericDate(time.Now()),
 		},
 		HTM: "GET",
-		HTU: "http:///mcp",
+		HTU: "http://localhost/mcp",
 		ATH: ath,
 	}
 	dpopProof := generateDPoPProof(t, priv, pub, dpopClaims)
 
-	req := httptest.NewRequest("GET", "http:///mcp", nil)
+	req := httptest.NewRequest("GET", "http://localhost/mcp", nil)
 	req.Header.Set("Authorization", "DPoP "+tokenStr)
 	req.Header.Set("DPoP", dpopProof)
 	rec := httptest.NewRecorder()
@@ -480,12 +480,12 @@ func TestValidatorMiddleware_DPoPBindingMismatch(t *testing.T) {
 			IssuedAt: jwt.NewNumericDate(time.Now()),
 		},
 		HTM: "GET",
-		HTU: "http:///mcp",
+		HTU: "http://localhost/mcp",
 		ATH: ath,
 	}
 	dpopProof := generateDPoPProof(t, priv, pub, dpopClaims)
 
-	req := httptest.NewRequest("GET", "http:///mcp", nil)
+	req := httptest.NewRequest("GET", "http://localhost/mcp", nil)
 	req.Header.Set("Authorization", "DPoP "+tokenStr)
 	req.Header.Set("DPoP", dpopProof)
 	rec := httptest.NewRecorder()

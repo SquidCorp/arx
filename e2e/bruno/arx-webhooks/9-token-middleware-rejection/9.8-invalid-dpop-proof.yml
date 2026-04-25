@@ -1,0 +1,25 @@
+info:
+  name: "9.8 Valid token but invalid DPoP proof"
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: "{{baseUrl}}/resource"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const token = bru.getVar('mwAccessToken');
+        req.setHeader('Authorization', `DPoP ${token}`);
+        req.setHeader('DPoP', 'not.a.valid.dpop.jwt');
+    - type: tests
+      code: |-
+        test("should return 401", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("should return invalid_dpop_proof error", function() {
+          expect(res.body).to.have.property("error", "invalid_dpop_proof");
+        });

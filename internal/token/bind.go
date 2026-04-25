@@ -118,7 +118,7 @@ func (h *BindHandler) Bind(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate DPoP proof.
-	thumbprint, err := ValidateDPoPProof(req.DPoPProof, "", r.Method, r.URL.String(), func(jti string) (bool, error) {
+	thumbprint, err := ValidateDPoPProof(req.DPoPProof, "", r.Method, RequestURL(r), func(jti string) (bool, error) {
 		return h.nonces.CheckDPoPNonce(r.Context(), jti)
 	})
 	if err != nil {

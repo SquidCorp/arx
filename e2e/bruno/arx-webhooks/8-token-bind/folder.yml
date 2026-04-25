@@ -1,0 +1,3 @@
+info:
+  name: 8 - Token Bind
+  description: Tests for POST /token/bind (DPoP bind-code exchange).

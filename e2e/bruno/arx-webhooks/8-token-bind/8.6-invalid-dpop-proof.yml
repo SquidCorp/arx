@@ -1,0 +1,64 @@
+info:
+  name: "8.6 Invalid DPoP proof (malformed JWT)"
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{baseUrl}}/token/bind"
+  body:
+    type: json
+    data: |-
+      {"bind_code":"any-code","dpop_proof":"not.a.valid.jwt"}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Create a fresh session to get a valid bind code, then use an invalid DPoP proof.
+        const crypto = require('node:crypto');
+
+        const privateKeyHex = bru.getEnvVar('MERCHANT_PRIVATE_KEY');
+        const seed = Buffer.from(privateKeyHex, 'hex');
+        const pkcs8Prefix = Buffer.from('302e020100300506032b657004220420', 'hex');
+        const der = Buffer.concat([pkcs8Prefix, seed]);
+        const keyObject = crypto.createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
+
+        const timestamp = Math.floor(Date.now() / 1000).toString();
+        const nonce = crypto.randomUUID();
+        const sessionBody = JSON.stringify({ sessionId: 'e2e-bind-invalid-dpop', scopes: ['cart.view'], expiresIn: 3600 });
+        const baseUrl = bru.getEnvVar('baseUrl');
+        const webhookUrl = new URL(`${baseUrl}/webhook/session-connected`);
+        const path = webhookUrl.pathname;
+
+        const message = `POST\n${path}\n${timestamp}\n${nonce}\n${sessionBody}`;
+        const signature = crypto.sign(null, Buffer.from(message), keyObject);
+        const signatureB64 = signature.toString('base64');
+
+        // Create session via fetch.
+        const resp = await fetch(webhookUrl.toString(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Arx-Tenant-ID': bru.getEnvVar('TENANT_ID'),
+            'X-Arx-Signature': signatureB64,
+            'X-Arx-Timestamp': timestamp,
+            'X-Arx-Nonce': nonce
+          },
+          body: sessionBody
+        });
+        const data = await resp.json();
+        const bindCode = data.bindCode;
+
+        const bodyStr = JSON.stringify({ bind_code: bindCode, dpop_proof: 'not.a.valid.jwt' });
+        req.setBody(bodyStr);
+        req.setHeader('Content-Type', 'application/json');
+    - type: tests
+      code: |-
+        test("should return 401", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("should return invalid_dpop_proof error", function() {
+          expect(res.body).to.have.property("error", "invalid_dpop_proof");
+        });

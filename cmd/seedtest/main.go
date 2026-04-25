@@ -52,7 +52,7 @@ func run() error {
 	}
 
 	// Generate Arx signing keypair encrypted with DEK.
-	arxPub, arxPrivEnc, err := km.GenerateSigningKeypair(ctx, dekEnc)
+	arxPub, arxPriv, arxPrivEnc, err := km.GenerateSigningKeypairExport(ctx, dekEnc)
 	if err != nil {
 		return fmt.Errorf("generate signing keypair: %w", err)
 	}
@@ -95,10 +95,13 @@ func run() error {
 
 	// Output values for Bruno .env file.
 	merchantSeed := merchantPriv.Seed()
+	arxSeed := arxPriv.Seed()
 	fmt.Println("# Paste into e2e/bruno/arx-webhooks/.env")
+	fmt.Printf("BASE_URL=http://localhost:8080\n")
 	fmt.Printf("TENANT_ID=%s\n", tenantID)
 	fmt.Printf("MERCHANT_PRIVATE_KEY=%s\n", hex.EncodeToString(merchantSeed))
 	fmt.Printf("MERCHANT_PUBLIC_KEY=%s\n", hex.EncodeToString(merchantPub))
+	fmt.Printf("ARX_SIGNING_PRIVATE_KEY=%s\n", hex.EncodeToString(arxSeed))
 
 	fmt.Fprintf(os.Stderr, "\nTest tenant seeded: %s\n", tenantID)
 	return nil

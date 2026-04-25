@@ -10,9 +10,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fambr/arx/internal/cache"
 	"github.com/fambr/arx/internal/config"
+	"github.com/fambr/arx/internal/crypto"
 	"github.com/fambr/arx/internal/database"
 	"github.com/fambr/arx/internal/handler"
+	"github.com/fambr/arx/internal/token"
 	"github.com/fambr/arx/internal/worker"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -52,7 +55,25 @@ func serve(cfg *config.Config) error {
 		return fmt.Errorf("start river worker: %w", err)
 	}
 
-	r := newRouter(pool, riverClient)
+	masterKey := os.Getenv("ARX_MASTER_KEY")
+	if masterKey == "" {
+		return fmt.Errorf("ARX_MASTER_KEY env var is required")
+	}
+
+	keyManager, err := crypto.NewLocalKeyManager(masterKey)
+	if err != nil {
+		return fmt.Errorf("create key manager: %w", err)
+	}
+
+	cacheClient, err := cache.Connect(context.Background(), cfg.RedisURL)
+	if err != nil {
+		return fmt.Errorf("connect to redis: %w", err)
+	}
+	defer cacheClient.Close()
+
+	issuer := token.NewIssuer(token.DefaultConfig(cfg.Issuer), keyManager)
+
+	r := newRouter(pool, riverClient, cacheClient, keyManager, issuer)
 	srv := newServer(cfg.Port, r)
 
 	go func() {
@@ -81,14 +102,20 @@ func serve(cfg *config.Config) error {
 	return nil
 }
 
-func newRouter(db *pgxpool.Pool, riverClient *river.Client[pgx.Tx]) chi.Router {
+func newRouter(
+	db *pgxpool.Pool,
+	riverClient *river.Client[pgx.Tx],
+	cacheClient *cache.Client,
+	keyManager crypto.KeyManager,
+	issuer *token.Issuer,
+) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
 
-	handler.Register(r, db, riverClient)
+	handler.Register(r, db, riverClient, cacheClient, keyManager, issuer)
 	return r
 }
 

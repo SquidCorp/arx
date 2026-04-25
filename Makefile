@@ -1,4 +1,4 @@
-.PHONY: quality-gate fmt lint test coverage vuln dev dev-down migrate seed-test e2e
+.PHONY: quality-gate fmt lint test coverage vuln dev dev-down migrate seed-test e2e e2e-go e2e-bruno
 
 # Main quality gate — run this!
 quality-gate: fmt lint test coverage vuln
@@ -66,12 +66,28 @@ migrate:
 
 seed-test:
 	@echo "🌱 Seeding test tenant..."
-	ARX_MASTER_KEY=$${ARX_MASTER_KEY:-$$(openssl rand -hex 32)} go run ./cmd/seedtest | tee e2e/bruno/arx-webhooks/.env
+	@ARX_MASTER_KEY=$${ARX_MASTER_KEY:-$$(openssl rand -hex 32)} go run ./cmd/seedtest > e2e/bruno/arx-webhooks/.env.tmp && mv e2e/bruno/arx-webhooks/.env.tmp e2e/bruno/arx-webhooks/.env
 	@echo "✅ Test tenant seeded — .env written to e2e/bruno/arx-webhooks/.env"
 
-e2e:
+# Run all e2e test suites (Go + Bruno)
+e2e: e2e-go e2e-bruno
+	@echo "✅ All e2e tests passed!"
+
+# Run Go e2e tests (tests matching Test.*E2E)
+e2e-go:
+	@echo "🧪 Running Go e2e tests..."
+	go test ./... -race -count=1 -run 'Test.*E2E' -v
+
+# Run Bruno API e2e tests
+e2e-bruno:
+	@echo "🔧 Checking Bruno e2e prerequisites..."
+	@command -v bru >/dev/null 2>&1 || { echo "❌ bru is required. Install with: npm install -g @usebruno/cli"; exit 1; }
+	@test -f e2e/bruno/arx-webhooks/.env || { echo "❌ No .env file found. Run: make seed-test"; exit 1; }
+	@curl -sf http://localhost:8080/health >/dev/null 2>&1 || { echo "⚠️  Warning: App does not appear to be running on http://localhost:8080. Start it with: make dev"; }
 	@echo "🧪 Running Bruno e2e tests..."
-	cd e2e/bruno/arx-webhooks && bru run --env local --sandbox=developer --reporter-json ./reports/results.json
+	@mkdir -p e2e/bruno/arx-webhooks/reports
+	bash -c 'set -a && source e2e/bruno/arx-webhooks/.env && set +a && cd e2e/bruno/arx-webhooks && bru run --env-file environments/local.json --sandbox=developer --reporter-json ./reports/results.json'
+	@echo "✅ Bruno e2e tests completed — report: e2e/bruno/arx-webhooks/reports/results.json"
 
 docs:
 	@echo "📖 Starting local documentation server (pkgsite)..."

@@ -114,27 +114,37 @@ func (km *LocalKeyManager) GenerateDEK(_ context.Context) ([]byte, error) {
 	return km.encryptAESGCM(km.masterKey, dek)
 }
 
-// GenerateSigningKeypair generates a new Ed25519 keypair. The private key is encrypted
+// GenerateSigningKeypair generates a new Ed25519 signing keypair. The private key is encrypted
 // with the tenant's DEK (which is itself encrypted with the master key).
 func (km *LocalKeyManager) GenerateSigningKeypair(_ context.Context, dekEnc []byte) (ed25519.PublicKey, []byte, error) {
+	pub, _, privEnc, err := km.GenerateSigningKeypairExport(context.Background(), dekEnc)
+	if err != nil {
+		return nil, nil, err
+	}
+	return pub, privEnc, nil
+}
+
+// GenerateSigningKeypairExport generates a new Ed25519 signing keypair and returns
+// the public key, the raw private key, and the encrypted private key.
+// This is intended for test-seeding tools that need the raw private key.
+func (km *LocalKeyManager) GenerateSigningKeypairExport(_ context.Context, dekEnc []byte) (ed25519.PublicKey, ed25519.PrivateKey, []byte, error) {
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("generate Ed25519 keypair: %w", err)
+		return nil, nil, nil, fmt.Errorf("generate Ed25519 keypair: %w", err)
 	}
-	defer zeroBytes(priv)
 
 	dek, err := km.decryptAESGCM(km.masterKey, dekEnc)
 	if err != nil {
-		return nil, nil, fmt.Errorf("decrypt DEK: %w", err)
+		return nil, nil, nil, fmt.Errorf("decrypt DEK: %w", err)
 	}
 	defer zeroBytes(dek)
 
 	privEnc, err := km.encryptAESGCM(dek, priv)
 	if err != nil {
-		return nil, nil, fmt.Errorf("encrypt signing key: %w", err)
+		return nil, nil, nil, fmt.Errorf("encrypt signing key: %w", err)
 	}
 
-	return pub, privEnc, nil
+	return pub, priv, privEnc, nil
 }
 
 // SignJWT signs the JWT signing input using the tenant's Ed25519 signing key.

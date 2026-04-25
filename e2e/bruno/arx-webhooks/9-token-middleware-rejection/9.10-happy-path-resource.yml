@@ -1,0 +1,62 @@
+info:
+  name: "9.10 Happy path — valid token + valid DPoP proof"
+  type: http
+  seq: 11
+
+http:
+  method: GET
+  url: "{{baseUrl}}/resource"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+
+        const token = bru.getVar('mwAccessToken');
+        req.setHeader('Authorization', `DPoP ${token}`);
+
+        // Reconstruct the private key from the stored hex.
+        const privHex = bru.getVar('mwDpopPrivateKeyHex');
+        const privDer = Buffer.from(privHex, 'hex');
+        const privateKey = crypto.createPrivateKey({ key: privDer, format: 'der', type: 'pkcs8' });
+
+        const xB64 = bru.getVar('mwDpopPublicX');
+
+        const header = {
+          typ: 'dpop+jwt',
+          alg: 'EdDSA',
+          jwk: { kty: 'OKP', crv: 'Ed25519', x: xB64 }
+        };
+
+        const rawUrl = req.getUrl().replace(/\{\{baseUrl\}\}/g, bru.getEnvVar('baseUrl'));
+        const url = new URL(rawUrl);
+
+        // Compute ath (SHA-256 of access token).
+        const hash = crypto.createHash('sha256').update(token).digest();
+        const ath = hash.toString('base64url');
+
+        const payload = {
+          jti: crypto.randomUUID(),
+          htm: 'GET',
+          htu: `${url.origin}${url.pathname}`,
+          iat: Math.floor(Date.now() / 1000),
+          ath: ath
+        };
+
+        const encHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+        const encPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+        const sigInput = `${encHeader}.${encPayload}`;
+        const sig = crypto.sign(null, Buffer.from(sigInput), privateKey);
+        const dpopJwt = `${sigInput}.${sig.toString('base64url')}`;
+
+        req.setHeader('DPoP', dpopJwt);
+    - type: tests
+      code: |-
+        test("should return 200 OK", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return status ok", function() {
+          expect(res.body).to.have.property("status", "ok");
+        });

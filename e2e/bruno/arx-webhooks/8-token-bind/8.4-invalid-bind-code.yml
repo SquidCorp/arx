@@ -1,0 +1,57 @@
+info:
+  name: "8.4 Invalid bind code"
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/token/bind"
+  body:
+    type: json
+    data: |-
+      {"bind_code":"nonexistent-bind-code","dpop_proof":"{{dpopProof}}"}
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+        const pubRaw = publicKey.export({ type: 'spki', format: 'der' });
+        const pubBytes = pubRaw.subarray(pubRaw.length - 32);
+        const xB64 = pubBytes.toString('base64url');
+
+        const header = {
+          typ: 'dpop+jwt',
+          alg: 'EdDSA',
+          jwk: { kty: 'OKP', crv: 'Ed25519', x: xB64 }
+        };
+
+        const rawUrl = req.getUrl().replace(/\{\{baseUrl\}\}/g, bru.getEnvVar('baseUrl'));
+        const url = new URL(rawUrl);
+
+        const payload = {
+          jti: crypto.randomUUID(),
+          htm: 'POST',
+          htu: `${url.origin}${url.pathname}`,
+          iat: Math.floor(Date.now() / 1000)
+        };
+
+        const encHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+        const encPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+        const sigInput = `${encHeader}.${encPayload}`;
+        const sig = crypto.sign(null, Buffer.from(sigInput), privateKey);
+        const dpopJwt = `${sigInput}.${sig.toString('base64url')}`;
+
+        req.setBody(JSON.stringify({ bind_code: 'nonexistent-bind-code', dpop_proof: dpopJwt }));
+        req.setHeader('Content-Type', 'application/json');
+    - type: tests
+      code: |-
+        test("should return 400", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should return invalid_bind_code error", function() {
+          expect(res.body).to.have.property("error", "invalid_bind_code");
+        });

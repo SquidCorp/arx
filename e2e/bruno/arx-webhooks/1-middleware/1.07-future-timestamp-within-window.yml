@@ -26,9 +26,10 @@ runtime:
         // 3 minutes in the future (within 5min window)
         const timestamp = (Math.floor(Date.now() / 1000) + 180).toString();
         const nonce = crypto.randomUUID();
-        const body = JSON.stringify(req.getBody());
+        let body = JSON.stringify(req.getBody());
+        body = body.replace(/\{\{(\w+)\}\}/g, (m, name) => bru.getVar(name) || bru.getEnvVar(name) || m);
         const method = req.getMethod();
-        const url = new URL(req.getUrl());
+        const url = new URL(req.getUrl().replace(/\{\{baseUrl\}\}/g, bru.getEnvVar('baseUrl')));
         const path = url.pathname;
 
         const message = `${method}\n${path}\n${timestamp}\n${nonce}\n${body}`;

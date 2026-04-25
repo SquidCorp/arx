@@ -1,0 +1,46 @@
+info:
+  name: "9.5 Token with unknown tenant"
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{baseUrl}}/resource"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+
+        // Create a self-signed JWT with a non-existent tenant.
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+
+        const header = { alg: 'EdDSA', typ: 'JWT' };
+        const payload = {
+          sub: 'some-session',
+          iss: 'https://arx.example.com',
+          aud: 'arx',
+          exp: Math.floor(Date.now() / 1000) + 3600,
+          iat: Math.floor(Date.now() / 1000),
+          scope: 'cart.view',
+          tenant: 'non-existent-tenant-id',
+          cnf: { jkt: 'some-thumbprint' }
+        };
+
+        const encHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+        const encPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+        const sigInput = `${encHeader}.${encPayload}`;
+        const sig = crypto.sign(null, Buffer.from(sigInput), privateKey);
+        const jwt = `${sigInput}.${sig.toString('base64url')}`;
+
+        req.setHeader('Authorization', `DPoP ${jwt}`);
+    - type: tests
+      code: |-
+        test("should return 401", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("should return unknown_tenant error", function() {
+          expect(res.body).to.have.property("error", "unknown_tenant");
+        });

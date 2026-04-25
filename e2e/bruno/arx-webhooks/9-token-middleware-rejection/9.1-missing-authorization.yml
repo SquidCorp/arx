@@ -1,0 +1,20 @@
+info:
+  name: "9.1 Missing Authorization header"
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/resource"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 401", function() {
+          expect(res.status).to.equal(401);
+        });
+
+        test("should return missing_token error", function() {
+          expect(res.body).to.have.property("error", "missing_token");
+        });

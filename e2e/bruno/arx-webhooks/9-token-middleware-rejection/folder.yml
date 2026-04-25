@@ -1,0 +1,3 @@
+info:
+  name: 9 - Token Middleware Rejection
+  description: Tests for GET /resource — token validation middleware rejection paths.
