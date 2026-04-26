@@ -54,12 +54,12 @@
 
 ## 7. Scope Enforcement Engine
 
-- [ ] 7.1 Define standard tool catalog data structure with typed parameter schemas
-- [ ] 7.2 Implement initial catalog entries (cart.add, cart.remove, cart.view, checkout.exec, orders.list, products.search)
-- [ ] 7.3 Implement scope matching — check session scopes ⊇ tool required_scopes
-- [ ] 7.4 Implement structured constraint parsing from scope strings (`resource:action:key=value`)
-- [ ] 7.5 Implement constraint evaluation — extract param from tool call, compare against constraint (numeric, string, enum)
-- [ ] 7.6 Implement scope-filtered tool discovery for `list_tools`
+- [x] 7.1 Define standard tool catalog data structure with typed parameter schemas
+- [x] 7.2 Implement initial catalog entries (cart.add, cart.remove, cart.view, checkout.exec, orders.list, products.search)
+- [x] 7.3 Implement scope matching — check session scopes ⊇ tool required_scopes
+- [x] 7.4 Implement structured constraint parsing from scope strings (`resource:action:key=value`)
+- [x] 7.5 Implement constraint evaluation — extract param from tool call, compare against constraint (numeric, string, enum)
+- [x] 7.6 Implement scope-filtered tool discovery for `list_tools`
 
 ## 8. MCP Server
 
