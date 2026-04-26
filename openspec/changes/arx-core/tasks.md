@@ -77,7 +77,7 @@
 - [x] 9.2 Implement outbound HTTP client with per-tool configurable timeout and circuit breaker
 - [x] 9.3 Implement Ed25519 request signing on outbound proxied requests (X-Arx-Signature, X-Arx-Timestamp)
 - [x] 9.4 Implement session context headers injection (X-Arx-Session, X-Arx-User, X-Arx-Scopes)
-- [ ] 9.5 Implement upstream response handling — forward 2xx/4xx responses, mask 5xx errors, handle timeouts
+- [x] 9.5 Implement upstream response handling — forward 2xx/4xx responses, mask 5xx errors, handle timeouts
 
 ## 10. Audit Logging
 

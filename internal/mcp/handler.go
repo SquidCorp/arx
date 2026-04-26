@@ -362,15 +362,43 @@ func (h *Handler) execCallTool(r *http.Request, req *Request, params CallToolPar
 
 	result, err := h.toolCaller.CallTool(ctx, info.TenantID, args.Name, args.Params, r)
 	if err != nil {
-		return Response{
-			JSONRPC: jsonRPCVersion,
-			ID:      req.ID,
-			Error:   &RPCError{Code: CodeInternalError, Message: "upstream error"},
-		}
+		return h.upstreamErrorResponse(req.ID, err)
+	}
+
+	// If the caller returns an UpstreamResponse, use it to set isError for 4xx.
+	if resp, ok := result.(*proxy.UpstreamResponse); ok {
+		text, _ := json.Marshal(resp.Body)
+		isError := resp.StatusCode >= 400 && resp.StatusCode < 500
+		return toolResult(req.ID, string(text), isError)
 	}
 
 	text, _ := json.Marshal(result)
 	return toolResult(req.ID, string(text), false)
+}
+
+// upstreamErrorResponse maps proxy sentinel errors to structured MCP error
+// responses with specific error messages.
+func (h *Handler) upstreamErrorResponse(id json.RawMessage, err error) Response {
+	code := CodeInternalError
+	msg := "upstream error"
+
+	switch {
+	case errors.Is(err, proxy.ErrUpstreamTimeout):
+		code = CodeUpstreamError
+		msg = "upstream_timeout"
+	case errors.Is(err, proxy.ErrUpstreamError):
+		code = CodeUpstreamError
+		msg = "upstream_error"
+	case errors.Is(err, proxy.ErrCircuitOpen):
+		code = CodeUpstreamError
+		msg = "circuit_open"
+	}
+
+	return Response{
+		JSONRPC: jsonRPCVersion,
+		ID:      id,
+		Error:   &RPCError{Code: code, Message: msg},
+	}
 }
 
 // execSessionInfo returns the current session's metadata.

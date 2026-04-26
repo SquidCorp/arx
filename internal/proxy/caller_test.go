@@ -66,9 +66,16 @@ func TestCaller_SuccessfulPOST(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	m, ok := result.(map[string]any)
+	resp, ok := result.(*proxy.UpstreamResponse)
 	if !ok {
-		t.Fatalf("expected map result, got %T", result)
+		t.Fatalf("expected *UpstreamResponse, got %T", result)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200, got %d", resp.StatusCode)
+	}
+	m, ok := resp.Body.(map[string]any)
+	if !ok {
+		t.Fatalf("expected map body, got %T", resp.Body)
 	}
 	if m["status"] != "added" {
 		t.Errorf("expected status=added, got %v", m["status"])
@@ -110,9 +117,16 @@ func TestCaller_SuccessfulGET(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	m, ok := result.(map[string]any)
+	resp, ok := result.(*proxy.UpstreamResponse)
 	if !ok {
-		t.Fatalf("expected map result, got %T", result)
+		t.Fatalf("expected *UpstreamResponse, got %T", result)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200, got %d", resp.StatusCode)
+	}
+	m, ok := resp.Body.(map[string]any)
+	if !ok {
+		t.Fatalf("expected map body, got %T", resp.Body)
 	}
 	if m["results"] == nil {
 		t.Error("expected results field")
@@ -283,9 +297,13 @@ func TestCaller_CircuitBreakerHalfOpen(t *testing.T) {
 		t.Fatalf("expected success on half-open probe, got: %v", err)
 	}
 
-	m, ok := result.(map[string]any)
+	resp, ok := result.(*proxy.UpstreamResponse)
 	if !ok {
-		t.Fatalf("expected map result, got %T", result)
+		t.Fatalf("expected *UpstreamResponse, got %T", result)
+	}
+	m, ok := resp.Body.(map[string]any)
+	if !ok {
+		t.Fatalf("expected map body, got %T", resp.Body)
 	}
 	if m["ok"] != "true" {
 		t.Errorf("expected ok=true, got %v", m["ok"])
@@ -360,12 +378,119 @@ func TestCaller_Upstream4xxForwarded(t *testing.T) {
 		t.Fatalf("4xx should not be an error, got: %v", err)
 	}
 
-	m, ok := result.(map[string]any)
+	resp, ok := result.(*proxy.UpstreamResponse)
 	if !ok {
-		t.Fatalf("expected map result, got %T", result)
+		t.Fatalf("expected *UpstreamResponse, got %T", result)
+	}
+	if resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Errorf("expected status 422, got %d", resp.StatusCode)
+	}
+	m, ok := resp.Body.(map[string]any)
+	if !ok {
+		t.Fatalf("expected map body, got %T", resp.Body)
 	}
 	if m["error"] != "invalid product" {
 		t.Errorf("expected forwarded error, got %v", m["error"])
+	}
+}
+
+func TestCaller_UpstreamNonJSONResponse(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("plain text response"))
+	}))
+	defer srv.Close()
+
+	resolver := &stubResolver{data: map[string]*proxy.ToolData{
+		"t1:text-tool": {
+			UpstreamURL:    srv.URL + "/text",
+			UpstreamMethod: "GET",
+			ParamMapping:   `{}`,
+			TimeoutMs:      5000,
+		},
+	}}
+
+	caller := proxy.NewCaller(resolver)
+	result, err := caller.CallTool(
+		context.Background(),
+		"t1", "text-tool",
+		map[string]any{},
+		httptest.NewRequest(http.MethodPost, "/mcp", nil),
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	resp, ok := result.(*proxy.UpstreamResponse)
+	if !ok {
+		t.Fatalf("expected *UpstreamResponse, got %T", result)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200, got %d", resp.StatusCode)
+	}
+	text, ok := resp.Body.(string)
+	if !ok {
+		t.Fatalf("expected string body, got %T", resp.Body)
+	}
+	if text != "plain text response" {
+		t.Errorf("expected plain text response, got %q", text)
+	}
+}
+
+func TestCaller_Upstream4xxPreservesStatusCode(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		statusCode int
+	}{
+		{"bad_request", http.StatusBadRequest},
+		{"not_found", http.StatusNotFound},
+		{"conflict", http.StatusConflict},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.statusCode)
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": tt.name})
+			}))
+			defer srv.Close()
+
+			resolver := &stubResolver{data: map[string]*proxy.ToolData{
+				"t1:tool": {
+					UpstreamURL:    srv.URL + "/endpoint",
+					UpstreamMethod: "POST",
+					ParamMapping:   `{}`,
+					TimeoutMs:      5000,
+				},
+			}}
+
+			caller := proxy.NewCaller(resolver)
+			result, err := caller.CallTool(
+				context.Background(),
+				"t1", "tool",
+				map[string]any{},
+				httptest.NewRequest(http.MethodPost, "/mcp", nil),
+			)
+			if err != nil {
+				t.Fatalf("4xx should not be an error, got: %v", err)
+			}
+
+			resp, ok := result.(*proxy.UpstreamResponse)
+			if !ok {
+				t.Fatalf("expected *UpstreamResponse, got %T", result)
+			}
+			if resp.StatusCode != tt.statusCode {
+				t.Errorf("expected status %d, got %d", tt.statusCode, resp.StatusCode)
+			}
+		})
 	}
 }
 
@@ -437,9 +562,13 @@ func TestCaller_MixedBodyAndQuery(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	m, ok := result.(map[string]any)
+	resp, ok := result.(*proxy.UpstreamResponse)
 	if !ok {
-		t.Fatalf("expected map, got %T", result)
+		t.Fatalf("expected *UpstreamResponse, got %T", result)
+	}
+	m, ok := resp.Body.(map[string]any)
+	if !ok {
+		t.Fatalf("expected map body, got %T", resp.Body)
 	}
 	if m["ok"] != "true" {
 		t.Errorf("expected ok=true, got %v", m["ok"])
@@ -500,9 +629,13 @@ func TestCaller_CircuitBreakerPerTool(t *testing.T) {
 		t.Fatalf("working tool should succeed, got: %v", err)
 	}
 
-	m, ok := result.(map[string]any)
+	resp, ok := result.(*proxy.UpstreamResponse)
 	if !ok {
-		t.Fatalf("expected map, got %T", result)
+		t.Fatalf("expected *UpstreamResponse, got %T", result)
+	}
+	m, ok := resp.Body.(map[string]any)
+	if !ok {
+		t.Fatalf("expected map body, got %T", resp.Body)
 	}
 	if m["ok"] != "true" {
 		t.Errorf("expected ok=true, got %v", m["ok"])

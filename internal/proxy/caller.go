@@ -31,6 +31,16 @@ var (
 	ErrCircuitOpen = errors.New("proxy: circuit_open")
 )
 
+// UpstreamResponse wraps the upstream HTTP response so callers can
+// differentiate between 2xx and 4xx status codes. 5xx responses are never
+// returned — they produce ErrUpstreamError instead.
+type UpstreamResponse struct {
+	// StatusCode is the HTTP status code returned by the upstream.
+	StatusCode int
+	// Body is the parsed response body (JSON-decoded value or raw string).
+	Body any
+}
+
 // ToolData holds the configuration needed to proxy a request to a tool's
 // upstream endpoint.
 type ToolData struct {
@@ -338,6 +348,8 @@ func (c *Caller) buildRequest(
 }
 
 // handleResponse processes the upstream response according to status code.
+// It returns an *UpstreamResponse for 2xx and 4xx, masks 5xx with
+// ErrUpstreamError, and never exposes internal upstream details.
 func (c *Caller) handleResponse(
 	resp *http.Response,
 	cb *circuitBreaker,
@@ -357,13 +369,16 @@ func (c *Caller) handleResponse(
 		return nil, ErrUpstreamError
 	}
 
-	// Success (2xx) or client error (4xx) — forward body.
+	// Success (2xx) or client error (4xx) — forward status and body.
 	cb.recordSuccess()
 
-	var result any
-	if err := json.Unmarshal(respBody, &result); err != nil {
+	var body any
+	if err := json.Unmarshal(respBody, &body); err != nil {
 		// Return raw text if not valid JSON.
-		return string(respBody), nil
+		body = string(respBody)
 	}
-	return result, nil
+	return &UpstreamResponse{
+		StatusCode: resp.StatusCode,
+		Body:       body,
+	}, nil
 }

@@ -1161,6 +1161,251 @@ func TestHandler_ToolsCall_CallTool_AnonymousUserContext(t *testing.T) {
 	}
 }
 
+func TestHandler_ToolsCall_CallTool_UpstreamTimeout(t *testing.T) {
+	t.Parallel()
+
+	tools := []scope.Tool{
+		{Name: "add-to-cart", CatalogType: "cart.add", RequiredScopes: []string{"cart:write"}},
+	}
+	caller := &stubToolCaller{err: proxy.ErrUpstreamTimeout}
+	h := mcp.NewHandler(
+		&stubTokenExtractor{
+			sessionID: "sess-1",
+			tenantID:  "tenant-1",
+			scopes:    []string{"cart:write"},
+		},
+		&stubToolProvider{tools: tools},
+		caller,
+	)
+
+	body := jsonRPCRequest(t, 1, "tools/call", map[string]any{
+		"name": "call_tool",
+		"arguments": map[string]any{
+			"name":   "add-to-cart",
+			"params": map[string]any{"product_id": "abc", "quantity": 1},
+		},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/mcp", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("DPoP", "dummy-proof")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	resp := parseResponse(t, rec.Body)
+	if resp.Error == nil {
+		t.Fatal("expected error response")
+	}
+	if resp.Error.Code != mcp.CodeUpstreamError {
+		t.Errorf("expected code %d, got %d", mcp.CodeUpstreamError, resp.Error.Code)
+	}
+	if resp.Error.Message != "upstream_timeout" {
+		t.Errorf("expected message upstream_timeout, got %q", resp.Error.Message)
+	}
+}
+
+func TestHandler_ToolsCall_CallTool_UpstreamError(t *testing.T) {
+	t.Parallel()
+
+	tools := []scope.Tool{
+		{Name: "add-to-cart", CatalogType: "cart.add", RequiredScopes: []string{"cart:write"}},
+	}
+	caller := &stubToolCaller{err: proxy.ErrUpstreamError}
+	h := mcp.NewHandler(
+		&stubTokenExtractor{
+			sessionID: "sess-1",
+			tenantID:  "tenant-1",
+			scopes:    []string{"cart:write"},
+		},
+		&stubToolProvider{tools: tools},
+		caller,
+	)
+
+	body := jsonRPCRequest(t, 1, "tools/call", map[string]any{
+		"name": "call_tool",
+		"arguments": map[string]any{
+			"name":   "add-to-cart",
+			"params": map[string]any{"product_id": "abc", "quantity": 1},
+		},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/mcp", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("DPoP", "dummy-proof")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	resp := parseResponse(t, rec.Body)
+	if resp.Error == nil {
+		t.Fatal("expected error response")
+	}
+	if resp.Error.Code != mcp.CodeUpstreamError {
+		t.Errorf("expected code %d, got %d", mcp.CodeUpstreamError, resp.Error.Code)
+	}
+	if resp.Error.Message != "upstream_error" {
+		t.Errorf("expected message upstream_error, got %q", resp.Error.Message)
+	}
+}
+
+func TestHandler_ToolsCall_CallTool_CircuitOpen(t *testing.T) {
+	t.Parallel()
+
+	tools := []scope.Tool{
+		{Name: "add-to-cart", CatalogType: "cart.add", RequiredScopes: []string{"cart:write"}},
+	}
+	caller := &stubToolCaller{err: proxy.ErrCircuitOpen}
+	h := mcp.NewHandler(
+		&stubTokenExtractor{
+			sessionID: "sess-1",
+			tenantID:  "tenant-1",
+			scopes:    []string{"cart:write"},
+		},
+		&stubToolProvider{tools: tools},
+		caller,
+	)
+
+	body := jsonRPCRequest(t, 1, "tools/call", map[string]any{
+		"name": "call_tool",
+		"arguments": map[string]any{
+			"name":   "add-to-cart",
+			"params": map[string]any{"product_id": "abc", "quantity": 1},
+		},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/mcp", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("DPoP", "dummy-proof")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	resp := parseResponse(t, rec.Body)
+	if resp.Error == nil {
+		t.Fatal("expected error response")
+	}
+	if resp.Error.Code != mcp.CodeUpstreamError {
+		t.Errorf("expected code %d, got %d", mcp.CodeUpstreamError, resp.Error.Code)
+	}
+	if resp.Error.Message != "circuit_open" {
+		t.Errorf("expected message circuit_open, got %q", resp.Error.Message)
+	}
+}
+
+func TestHandler_ToolsCall_CallTool_4xxReturnsIsError(t *testing.T) {
+	t.Parallel()
+
+	tools := []scope.Tool{
+		{Name: "add-to-cart", CatalogType: "cart.add", RequiredScopes: []string{"cart:write"}},
+	}
+	caller := &stubToolCaller{
+		result: &proxy.UpstreamResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Body:       map[string]any{"error": "invalid product"},
+		},
+	}
+	h := mcp.NewHandler(
+		&stubTokenExtractor{
+			sessionID: "sess-1",
+			tenantID:  "tenant-1",
+			scopes:    []string{"cart:write"},
+		},
+		&stubToolProvider{tools: tools},
+		caller,
+	)
+
+	body := jsonRPCRequest(t, 1, "tools/call", map[string]any{
+		"name": "call_tool",
+		"arguments": map[string]any{
+			"name":   "add-to-cart",
+			"params": map[string]any{"product_id": "abc", "quantity": 1},
+		},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/mcp", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("DPoP", "dummy-proof")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	resp := parseResponse(t, rec.Body)
+	if resp.Error != nil {
+		t.Fatalf("4xx should be a tool result, not RPC error: %+v", resp.Error)
+	}
+
+	// Parse the ToolResult from resp.Result.
+	resultJSON, err := json.Marshal(resp.Result)
+	if err != nil {
+		t.Fatalf("marshal result: %v", err)
+	}
+	var tr mcp.ToolResult
+	if err := json.Unmarshal(resultJSON, &tr); err != nil {
+		t.Fatalf("unmarshal ToolResult: %v", err)
+	}
+	if !tr.IsError {
+		t.Error("expected isError=true for 4xx response")
+	}
+	if len(tr.Content) == 0 {
+		t.Fatal("expected content in tool result")
+	}
+	// Body should contain the forwarded error.
+	if tr.Content[0].Text == "" {
+		t.Error("expected non-empty text content")
+	}
+}
+
+func TestHandler_ToolsCall_CallTool_2xxReturnsSuccess(t *testing.T) {
+	t.Parallel()
+
+	tools := []scope.Tool{
+		{Name: "add-to-cart", CatalogType: "cart.add", RequiredScopes: []string{"cart:write"}},
+	}
+	caller := &stubToolCaller{
+		result: &proxy.UpstreamResponse{
+			StatusCode: http.StatusOK,
+			Body:       map[string]any{"status": "added"},
+		},
+	}
+	h := mcp.NewHandler(
+		&stubTokenExtractor{
+			sessionID: "sess-1",
+			tenantID:  "tenant-1",
+			scopes:    []string{"cart:write"},
+		},
+		&stubToolProvider{tools: tools},
+		caller,
+	)
+
+	body := jsonRPCRequest(t, 1, "tools/call", map[string]any{
+		"name": "call_tool",
+		"arguments": map[string]any{
+			"name":   "add-to-cart",
+			"params": map[string]any{"product_id": "abc", "quantity": 1},
+		},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/mcp", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("DPoP", "dummy-proof")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	resp := parseResponse(t, rec.Body)
+	if resp.Error != nil {
+		t.Fatalf("unexpected error: %+v", resp.Error)
+	}
+
+	resultJSON, err := json.Marshal(resp.Result)
+	if err != nil {
+		t.Fatalf("marshal result: %v", err)
+	}
+	var tr mcp.ToolResult
+	if err := json.Unmarshal(resultJSON, &tr); err != nil {
+		t.Fatalf("unmarshal ToolResult: %v", err)
+	}
+	if tr.IsError {
+		t.Error("expected isError=false for 2xx response")
+	}
+}
+
 // --- Test stubs ---
 
 // stubTokenExtractor implements mcp.TokenExtractor for testing.

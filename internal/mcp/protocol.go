@@ -43,10 +43,11 @@ const (
 
 // MCP-specific error codes (application-defined range).
 const (
-	CodeAuthRequired = -32001
-	CodeUnknownTool  = -32002
-	CodeScopeError   = -32003
-	CodeDPoPError    = -32004
+	CodeAuthRequired  = -32001
+	CodeUnknownTool   = -32002
+	CodeScopeError    = -32003
+	CodeDPoPError     = -32004
+	CodeUpstreamError = -32005
 )
 
 // InitializeParams holds the client parameters for the initialize request.
