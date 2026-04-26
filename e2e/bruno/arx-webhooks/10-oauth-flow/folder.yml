@@ -1,0 +1,3 @@
+info:
+  name: 10 - OAuth 2.1 Flow
+  description: Tests for OAuth 2.1 metadata, authorize, callback, and token endpoints.

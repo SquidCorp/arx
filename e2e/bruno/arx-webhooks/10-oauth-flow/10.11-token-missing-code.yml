@@ -1,0 +1,27 @@
+info:
+  name: "10.11 Token — missing code"
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/token"
+  body:
+    type: form-urlencoded
+    data: |-
+      grant_type=authorization_code&code_verifier=test-verifier
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+    - type: tests
+      code: |-
+        test("should return 400", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should return missing_code error", function() {
+          expect(res.body.error).to.equal("missing_code");
+        });

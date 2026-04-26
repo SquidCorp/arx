@@ -1,0 +1,27 @@
+info:
+  name: "10.20 Refresh — missing refresh_token"
+  type: http
+  seq: 20
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/token"
+  body:
+    type: form-urlencoded
+    data: |-
+      grant_type=refresh_token
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+    - type: tests
+      code: |-
+        test("should return 400", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should return missing_refresh_token error", function() {
+          expect(res.body.error).to.equal("missing_refresh_token");
+        });

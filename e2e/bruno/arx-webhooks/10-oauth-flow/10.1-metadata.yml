@@ -1,0 +1,51 @@
+info:
+  name: "10.1 OAuth metadata discovery"
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/.well-known/oauth-authorization-server"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 200 OK", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should have issuer", function() {
+          expect(res.body).to.have.property("issuer");
+          expect(res.body.issuer).to.be.a("string");
+        });
+
+        test("should have authorization_endpoint", function() {
+          expect(res.body).to.have.property("authorization_endpoint");
+          expect(res.body.authorization_endpoint).to.match(/\/oauth\/authorize$/);
+        });
+
+        test("should have token_endpoint", function() {
+          expect(res.body).to.have.property("token_endpoint");
+          expect(res.body.token_endpoint).to.match(/\/oauth\/token$/);
+        });
+
+        test("should support response_type code", function() {
+          expect(res.body.response_types_supported).to.deep.equal(["code"]);
+        });
+
+        test("should support authorization_code and refresh_token grants", function() {
+          expect(res.body.grant_types_supported).to.deep.equal(["authorization_code", "refresh_token"]);
+        });
+
+        test("should support S256 code challenge method", function() {
+          expect(res.body.code_challenge_methods_supported).to.deep.equal(["S256"]);
+        });
+
+        test("should support EdDSA DPoP signing", function() {
+          expect(res.body.dpop_signing_alg_values_supported).to.deep.equal(["EdDSA"]);
+        });
+
+        test("should support none for token endpoint auth", function() {
+          expect(res.body.token_endpoint_auth_methods_supported).to.deep.equal(["none"]);
+        });

@@ -1,0 +1,20 @@
+info:
+  name: "10.5 Authorize — missing code_challenge"
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{baseUrl}}/oauth/authorize?client_id={{tenantId}}&redirect_uri=https://llm.example.com/callback&state=x&code_challenge_method=S256"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should return missing_code_challenge error", function() {
+          expect(res.body.error).to.equal("missing_code_challenge");
+        });

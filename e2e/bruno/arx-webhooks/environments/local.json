@@ -5,6 +5,8 @@
     { "name": "tenantId", "value": "{{process.env.TENANT_ID}}", "enabled": true, "secret": false, "type": "text" },
     { "name": "merchantPrivateKey", "value": "{{process.env.MERCHANT_PRIVATE_KEY}}", "enabled": true, "secret": true, "type": "text" },
     { "name": "MERCHANT_PRIVATE_KEY", "value": "{{process.env.MERCHANT_PRIVATE_KEY}}", "enabled": true, "secret": true, "type": "text" },
-    { "name": "TENANT_ID", "value": "{{process.env.TENANT_ID}}", "enabled": true, "secret": false, "type": "text" }
+    { "name": "TENANT_ID", "value": "{{process.env.TENANT_ID}}", "enabled": true, "secret": false, "type": "text" },
+    { "name": "OAUTH_REDIRECT_URI", "value": "{{process.env.OAUTH_REDIRECT_URI}}", "enabled": true, "secret": false, "type": "text" },
+    { "name": "MERCHANT_LOGIN_URL", "value": "{{process.env.MERCHANT_LOGIN_URL}}", "enabled": true, "secret": false, "type": "text" }
   ]
 }

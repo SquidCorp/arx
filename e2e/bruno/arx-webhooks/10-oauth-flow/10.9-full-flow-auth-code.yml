@@ -1,0 +1,152 @@
+info:
+  name: "10.9 Full OAuth flow — authorize → webhook → callback → token exchange"
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/token"
+  body:
+    type: form-urlencoded
+    data: |-
+      grant_type=authorization_code&code=placeholder&code_verifier=placeholder
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+
+        const baseUrl = bru.getEnvVar('baseUrl');
+        const tenantId = bru.getEnvVar('TENANT_ID');
+        const redirectUri = bru.getEnvVar('OAUTH_REDIRECT_URI');
+
+        // --- Step 1: Generate PKCE pair ---
+        const codeVerifier = crypto.randomBytes(32).toString('base64url');
+        const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
+
+        // --- Step 2: Call /oauth/authorize to create a pending flow ---
+        const authParams = new URLSearchParams({
+          client_id: tenantId,
+          redirect_uri: redirectUri,
+          state: 'e2e-state-10.9',
+          code_challenge: codeChallenge,
+          code_challenge_method: 'S256'
+        });
+
+        const authResp = await fetch(`${baseUrl}/oauth/authorize?${authParams.toString()}`, { redirect: 'manual' });
+        const location = authResp.headers.get('location') || '';
+        const locationUrl = new URL(location);
+        const flowUuid = locationUrl.searchParams.get('agent_session_uuid');
+
+        // --- Step 3: Fire webhook to link session to flow ---
+        const privateKeyHex = bru.getEnvVar('MERCHANT_PRIVATE_KEY');
+        const seed = Buffer.from(privateKeyHex, 'hex');
+        const pkcs8Prefix = Buffer.from('302e020100300506032b657004220420', 'hex');
+        const der = Buffer.concat([pkcs8Prefix, seed]);
+        const keyObject = crypto.createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
+
+        const sessionBody = JSON.stringify({
+          sessionId: 'e2e-oauth-session-10.9',
+          scopes: ['cart.view', 'cart.edit'],
+          expiresIn: 3600,
+          uuid: flowUuid
+        });
+
+        const webhookUrl = new URL(`${baseUrl}/webhook/session-connected`);
+        const ts1 = Math.floor(Date.now() / 1000).toString();
+        const nonce1 = crypto.randomUUID();
+        const msg1 = `POST\n${webhookUrl.pathname}\n${ts1}\n${nonce1}\n${sessionBody}`;
+        const sig1 = crypto.sign(null, Buffer.from(msg1), keyObject).toString('base64');
+
+        const webhookResp = await fetch(webhookUrl.toString(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Arx-Tenant-ID': tenantId,
+            'X-Arx-Signature': sig1,
+            'X-Arx-Timestamp': ts1,
+            'X-Arx-Nonce': nonce1
+          },
+          body: sessionBody
+        });
+
+        // --- Step 4: Call /oauth/callback to get the auth code ---
+        const callbackResp = await fetch(`${baseUrl}/oauth/callback?uuid=${flowUuid}`, { redirect: 'manual' });
+        const cbLocation = callbackResp.headers.get('location') || '';
+        const cbUrl = new URL(cbLocation);
+        const authCode = cbUrl.searchParams.get('code');
+        const returnedState = cbUrl.searchParams.get('state');
+
+        bru.setVar('callbackState', returnedState);
+        bru.setVar('oauthFlowUuid', flowUuid);
+
+        // --- Step 5: Generate DPoP keypair and proof for /oauth/token ---
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+        const pubRaw = publicKey.export({ type: 'spki', format: 'der' });
+        const pubBytes = pubRaw.subarray(pubRaw.length - 32);
+        const xB64 = pubBytes.toString('base64url');
+
+        const header = {
+          typ: 'dpop+jwt',
+          alg: 'EdDSA',
+          jwk: { kty: 'OKP', crv: 'Ed25519', x: xB64 }
+        };
+
+        const tokenUrl = new URL(`${baseUrl}/oauth/token`);
+        const payload = {
+          jti: crypto.randomUUID(),
+          htm: 'POST',
+          htu: `${tokenUrl.origin}${tokenUrl.pathname}`,
+          iat: Math.floor(Date.now() / 1000)
+        };
+
+        const encHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+        const encPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+        const sigInput = `${encHeader}.${encPayload}`;
+        const dpopSig = crypto.sign(null, Buffer.from(sigInput), privateKey);
+        const dpopJwt = `${sigInput}.${dpopSig.toString('base64url')}`;
+
+        // --- Step 6: Set the actual request ---
+        req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+        req.setHeader('DPoP', dpopJwt);
+        req.setBody(`grant_type=authorization_code&code=${authCode}&code_verifier=${codeVerifier}`);
+
+        // Store DPoP keypair for downstream tests.
+        bru.setVar('oauthDpopPrivateKeyHex', privateKey.export({ type: 'pkcs8', format: 'der' }).toString('hex'));
+        bru.setVar('oauthDpopPublicX', xB64);
+
+    - type: tests
+      code: |-
+        test("should return 200 OK", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return access_token", function() {
+          expect(res.body).to.have.property("access_token");
+          expect(res.body.access_token).to.be.a("string");
+          expect(res.body.access_token.length).to.be.greaterThan(0);
+        });
+
+        test("should return refresh_token", function() {
+          expect(res.body).to.have.property("refresh_token");
+          expect(res.body.refresh_token).to.be.a("string");
+          expect(res.body.refresh_token.length).to.be.greaterThan(0);
+        });
+
+        test("should return token_type DPoP", function() {
+          expect(res.body).to.have.property("token_type", "DPoP");
+        });
+
+        test("should return positive expires_in", function() {
+          expect(res.body).to.have.property("expires_in");
+          expect(res.body.expires_in).to.be.a("number");
+          expect(res.body.expires_in).to.be.greaterThan(0);
+        });
+
+        test("callback should have preserved state", function() {
+          expect(bru.getVar('callbackState')).to.equal('e2e-state-10.9');
+        });
+
+        bru.setVar("oauthRefreshToken", res.body.refresh_token);
+        bru.setVar("oauthAccessToken", res.body.access_token);

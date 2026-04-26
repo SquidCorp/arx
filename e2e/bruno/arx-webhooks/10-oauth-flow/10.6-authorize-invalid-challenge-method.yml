@@ -1,0 +1,20 @@
+info:
+  name: "10.6 Authorize — invalid code_challenge_method"
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{baseUrl}}/oauth/authorize?client_id={{tenantId}}&redirect_uri=https://llm.example.com/callback&state=x&code_challenge=x&code_challenge_method=plain"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should return 400", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should return invalid_code_challenge_method error", function() {
+          expect(res.body.error).to.equal("invalid_code_challenge_method");
+        });

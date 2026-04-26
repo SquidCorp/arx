@@ -1,0 +1,48 @@
+info:
+  name: "10.10 Refresh token exchange"
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/token"
+  body:
+    type: form-urlencoded
+    data: |-
+      grant_type=refresh_token&refresh_token=placeholder
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const refreshToken = bru.getVar('oauthRefreshToken');
+        req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+        req.setBody(`grant_type=refresh_token&refresh_token=${encodeURIComponent(refreshToken)}`);
+
+    - type: tests
+      code: |-
+        test("should return 200 OK", function() {
+          expect(res.status).to.equal(200);
+        });
+
+        test("should return new access_token", function() {
+          expect(res.body).to.have.property("access_token");
+          expect(res.body.access_token).to.be.a("string");
+          expect(res.body.access_token.length).to.be.greaterThan(0);
+        });
+
+        test("should return new refresh_token", function() {
+          expect(res.body).to.have.property("refresh_token");
+          expect(res.body.refresh_token).to.be.a("string");
+          expect(res.body.refresh_token.length).to.be.greaterThan(0);
+        });
+
+        test("should return token_type DPoP", function() {
+          expect(res.body).to.have.property("token_type", "DPoP");
+        });
+
+        test("should return positive expires_in", function() {
+          expect(res.body).to.have.property("expires_in");
+          expect(res.body.expires_in).to.be.a("number");
+          expect(res.body.expires_in).to.be.greaterThan(0);
+        });

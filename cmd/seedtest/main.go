@@ -70,13 +70,17 @@ func run() error {
 		INSERT INTO tenants (
 			name, merchant_public_key,
 			arx_signing_public_key, arx_signing_private_key_enc,
-			dek_enc, session_max_expiry, max_refreshes
-		) VALUES ($1, $2, $3, $4, $5, '1 hour', 5)
+			dek_enc, session_max_expiry, max_refreshes,
+			oauth_redirect_uris, merchant_login_url
+		) VALUES ($1, $2, $3, $4, $5, '1 hour', 5,
+			ARRAY['https://llm.example.com/callback'], 'https://merchant.example.com/login')
 		ON CONFLICT (name) DO UPDATE SET
 			merchant_public_key = EXCLUDED.merchant_public_key,
 			arx_signing_public_key = EXCLUDED.arx_signing_public_key,
 			arx_signing_private_key_enc = EXCLUDED.arx_signing_private_key_enc,
-			dek_enc = EXCLUDED.dek_enc
+			dek_enc = EXCLUDED.dek_enc,
+			oauth_redirect_uris = EXCLUDED.oauth_redirect_uris,
+			merchant_login_url = EXCLUDED.merchant_login_url
 		RETURNING id::text
 	`, "bruno-test-tenant", []byte(merchantPub), []byte(arxPub), arxPrivEnc, dekEnc).Scan(&tenantID)
 	if err != nil {
@@ -103,6 +107,8 @@ func run() error {
 	fmt.Printf("MERCHANT_PRIVATE_KEY=%s\n", hex.EncodeToString(merchantSeed))
 	fmt.Printf("MERCHANT_PUBLIC_KEY=%s\n", hex.EncodeToString(merchantPub))
 	fmt.Printf("ARX_SIGNING_PRIVATE_KEY=%s\n", hex.EncodeToString(arxSeed))
+	fmt.Printf("OAUTH_REDIRECT_URI=https://llm.example.com/callback\n")
+	fmt.Printf("MERCHANT_LOGIN_URL=https://merchant.example.com/login\n")
 
 	fmt.Fprintf(os.Stderr, "\nTest tenant seeded: %s\n", tenantID)
 	return nil

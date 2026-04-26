@@ -1,0 +1,27 @@
+info:
+  name: "10.19 Callback — flow already consumed"
+  type: http
+  seq: 19
+
+http:
+  method: GET
+  url: "{{baseUrl}}/oauth/callback?uuid=placeholder"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Use the flow UUID from test 10.9 which was already consumed during token exchange.
+        const baseUrl = bru.getEnvVar('baseUrl');
+        const flowUuid = bru.getVar('oauthFlowUuid');
+        req.setUrl(`${baseUrl}/oauth/callback?uuid=${flowUuid}`);
+
+    - type: tests
+      code: |-
+        test("should return 409 Conflict", function() {
+          expect(res.status).to.equal(409);
+        });
+
+        test("should return flow_already_consumed error", function() {
+          expect(res.body.error).to.equal("flow_already_consumed");
+        });

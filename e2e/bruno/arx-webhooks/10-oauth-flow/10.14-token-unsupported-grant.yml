@@ -1,0 +1,27 @@
+info:
+  name: "10.14 Token — unsupported grant_type"
+  type: http
+  seq: 14
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/token"
+  body:
+    type: form-urlencoded
+    data: |-
+      grant_type=client_credentials
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+    - type: tests
+      code: |-
+        test("should return 400", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should return unsupported_grant_type error", function() {
+          expect(res.body.error).to.equal("unsupported_grant_type");
+        });

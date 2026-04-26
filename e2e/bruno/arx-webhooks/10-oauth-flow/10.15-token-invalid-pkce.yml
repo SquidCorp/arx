@@ -1,0 +1,113 @@
+info:
+  name: "10.15 Token — invalid PKCE verifier"
+  type: http
+  seq: 15
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth/token"
+  body:
+    type: form-urlencoded
+    data: |-
+      grant_type=authorization_code&code=placeholder&code_verifier=wrong-verifier
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+
+        const baseUrl = bru.getEnvVar('baseUrl');
+        const tenantId = bru.getEnvVar('TENANT_ID');
+        const redirectUri = bru.getEnvVar('OAUTH_REDIRECT_URI');
+
+        // Generate PKCE pair.
+        const codeVerifier = crypto.randomBytes(32).toString('base64url');
+        const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
+
+        // Step 1: Authorize.
+        const authParams = new URLSearchParams({
+          client_id: tenantId,
+          redirect_uri: redirectUri,
+          state: 'e2e-state-10.15',
+          code_challenge: codeChallenge,
+          code_challenge_method: 'S256'
+        });
+        const authResp = await fetch(`${baseUrl}/oauth/authorize?${authParams.toString()}`, { redirect: 'manual' });
+        const location = authResp.headers.get('location') || '';
+        const flowUuid = new URL(location).searchParams.get('agent_session_uuid');
+
+        // Step 2: Fire webhook.
+        const privateKeyHex = bru.getEnvVar('MERCHANT_PRIVATE_KEY');
+        const seed = Buffer.from(privateKeyHex, 'hex');
+        const pkcs8Prefix = Buffer.from('302e020100300506032b657004220420', 'hex');
+        const der = Buffer.concat([pkcs8Prefix, seed]);
+        const keyObject = crypto.createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
+
+        const sessionBody = JSON.stringify({
+          sessionId: 'e2e-oauth-session-10.15',
+          scopes: ['cart.view'],
+          expiresIn: 3600,
+          uuid: flowUuid
+        });
+        const webhookUrl = new URL(`${baseUrl}/webhook/session-connected`);
+        const ts = Math.floor(Date.now() / 1000).toString();
+        const nonce = crypto.randomUUID();
+        const msg = `POST\n${webhookUrl.pathname}\n${ts}\n${nonce}\n${sessionBody}`;
+        const sig = crypto.sign(null, Buffer.from(msg), keyObject).toString('base64');
+
+        await fetch(webhookUrl.toString(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Arx-Tenant-ID': tenantId,
+            'X-Arx-Signature': sig,
+            'X-Arx-Timestamp': ts,
+            'X-Arx-Nonce': nonce
+          },
+          body: sessionBody
+        });
+
+        // Step 3: Callback to get auth code.
+        const cbResp = await fetch(`${baseUrl}/oauth/callback?uuid=${flowUuid}`, { redirect: 'manual' });
+        const cbLocation = cbResp.headers.get('location') || '';
+        const authCode = new URL(cbLocation).searchParams.get('code');
+
+        // Step 4: Build DPoP proof.
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+        const pubRaw = publicKey.export({ type: 'spki', format: 'der' });
+        const pubBytes = pubRaw.subarray(pubRaw.length - 32);
+        const xB64 = pubBytes.toString('base64url');
+
+        const header = {
+          typ: 'dpop+jwt',
+          alg: 'EdDSA',
+          jwk: { kty: 'OKP', crv: 'Ed25519', x: xB64 }
+        };
+        const tokenUrl = new URL(`${baseUrl}/oauth/token`);
+        const dpopPayload = {
+          jti: crypto.randomUUID(),
+          htm: 'POST',
+          htu: `${tokenUrl.origin}${tokenUrl.pathname}`,
+          iat: Math.floor(Date.now() / 1000)
+        };
+        const encHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+        const encPayload = Buffer.from(JSON.stringify(dpopPayload)).toString('base64url');
+        const sigInput = `${encHeader}.${encPayload}`;
+        const dpopSig = crypto.sign(null, Buffer.from(sigInput), privateKey);
+        const dpopJwt = `${sigInput}.${dpopSig.toString('base64url')}`;
+
+        // Step 5: Set request with WRONG code_verifier.
+        req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+        req.setHeader('DPoP', dpopJwt);
+        req.setBody(`grant_type=authorization_code&code=${authCode}&code_verifier=totally-wrong-verifier`);
+
+    - type: tests
+      code: |-
+        test("should return 400", function() {
+          expect(res.status).to.equal(400);
+        });
+
+        test("should return invalid_grant error", function() {
+          expect(res.body.error).to.equal("invalid_grant");
+        });

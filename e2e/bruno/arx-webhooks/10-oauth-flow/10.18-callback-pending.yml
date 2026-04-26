@@ -1,0 +1,50 @@
+info:
+  name: "10.18 Callback — flow still pending (no webhook fired)"
+  type: http
+  seq: 18
+
+http:
+  method: GET
+  url: "{{baseUrl}}/oauth/callback?uuid=placeholder"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const crypto = require('node:crypto');
+
+        const baseUrl = bru.getEnvVar('baseUrl');
+        const tenantId = bru.getEnvVar('TENANT_ID');
+        const redirectUri = bru.getEnvVar('OAUTH_REDIRECT_URI');
+
+        // Create a pending flow via /oauth/authorize (don't fire webhook).
+        const verifier = crypto.randomBytes(32).toString('base64url');
+        const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
+
+        const params = new URLSearchParams({
+          client_id: tenantId,
+          redirect_uri: redirectUri,
+          state: 'e2e-state-10.18',
+          code_challenge: challenge,
+          code_challenge_method: 'S256'
+        });
+
+        const resp = await fetch(`${baseUrl}/oauth/authorize?${params.toString()}`, { redirect: 'manual' });
+        const location = resp.headers.get('location') || '';
+        const flowUuid = new URL(location).searchParams.get('agent_session_uuid');
+
+        // Set the callback URL with the pending flow UUID.
+        const rawUrl = req.getUrl().replace(/\{\{baseUrl\}\}/g, baseUrl);
+        const callbackUrl = new URL(rawUrl);
+        callbackUrl.searchParams.set('uuid', flowUuid);
+        req.setUrl(callbackUrl.toString());
+
+    - type: tests
+      code: |-
+        test("should return 202 Accepted", function() {
+          expect(res.status).to.equal(202);
+        });
+
+        test("should return flow_pending error", function() {
+          expect(res.body.error).to.equal("flow_pending");
+        });
