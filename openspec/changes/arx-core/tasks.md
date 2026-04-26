@@ -63,13 +63,13 @@
 
 ## 8. MCP Server
 
-- [ ] 8.1 Set up MCP Streamable HTTP transport handler at `/mcp` (POST + SSE)
-- [ ] 8.2 Implement MCP `initialize` handshake returning server capabilities
-- [ ] 8.3 Implement MCP `tools/list` returning the 4 static meta-tools with descriptions
-- [ ] 8.4 Implement `list_tools` tool — require valid token, filter tenant tools by session scopes
-- [ ] 8.5 Implement `get_tool` tool — require valid token, return full schema for requested tool
-- [ ] 8.6 Implement `call_tool` tool — require valid token + DPoP proof, run enforcement pipeline, proxy to upstream
-- [ ] 8.7 Implement `session_info` tool — require valid token, return scopes, claims, expires_at, status
+- [x] 8.1 Set up MCP Streamable HTTP transport handler at `/mcp` (POST + SSE)
+- [x] 8.2 Implement MCP `initialize` handshake returning server capabilities
+- [x] 8.3 Implement MCP `tools/list` returning the 4 static meta-tools with descriptions
+- [x] 8.4 Implement `list_tools` tool — require valid token, filter tenant tools by session scopes
+- [x] 8.5 Implement `get_tool` tool — require valid token, return full schema for requested tool
+- [x] 8.6 Implement `call_tool` tool — require valid token + DPoP proof, run enforcement pipeline, proxy to upstream
+- [x] 8.7 Implement `session_info` tool — require valid token, return scopes, claims, expires_at, status
 
 ## 9. Reverse Proxy
 

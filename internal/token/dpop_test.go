@@ -3,8 +3,11 @@ package token
 import (
 	"crypto/ed25519"
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -380,5 +383,43 @@ func TestMatchHTU(t *testing.T) {
 				t.Errorf("unexpected error: %v", err)
 			}
 		})
+	}
+}
+
+func TestRequestURL_HTTP(t *testing.T) {
+	t.Parallel()
+	req := httptest.NewRequest("POST", "http://arx.example.com/mcp", nil)
+	got := RequestURL(req)
+	if got != "http://arx.example.com/mcp" {
+		t.Errorf("got %q, want http://arx.example.com/mcp", got)
+	}
+}
+
+func TestRequestURL_HTTPS(t *testing.T) {
+	t.Parallel()
+	req := httptest.NewRequest("POST", "https://arx.example.com/mcp", nil)
+	req.TLS = &tls.ConnectionState{}
+	got := RequestURL(req)
+	if got != "https://arx.example.com/mcp" {
+		t.Errorf("got %q, want https://arx.example.com/mcp", got)
+	}
+}
+
+func TestNormalizePath_Empty(t *testing.T) {
+	t.Parallel()
+	u, _ := url.Parse("https://example.com")
+	u.Path = ""
+	got := normalizePath(u)
+	if got != "/" {
+		t.Errorf("got %q, want /", got)
+	}
+}
+
+func TestNormalizePath_Dot(t *testing.T) {
+	t.Parallel()
+	u, _ := url.Parse("https://example.com/.")
+	got := normalizePath(u)
+	if got != "/" {
+		t.Errorf("got %q, want /", got)
 	}
 }

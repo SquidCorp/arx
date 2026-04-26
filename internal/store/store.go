@@ -254,7 +254,7 @@ type TokenSessionReader struct{ *Store }
 
 // GetSession implements token.SessionReader.
 func (t *TokenSessionReader) GetSession(ctx context.Context, id string) (*token.SessionInfo, error) {
-	return t.Store.GetSessionInfo(ctx, id)
+	return t.GetSessionInfo(ctx, id)
 }
 
 // Ensure compile-time interface satisfaction.

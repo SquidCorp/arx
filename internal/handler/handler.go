@@ -8,6 +8,7 @@ import (
 
 	"github.com/fambr/arx/internal/cache"
 	"github.com/fambr/arx/internal/crypto"
+	"github.com/fambr/arx/internal/mcp"
 	"github.com/fambr/arx/internal/oauth"
 	"github.com/fambr/arx/internal/store"
 	"github.com/fambr/arx/internal/testapi"
@@ -98,6 +99,17 @@ func Register(
 
 	// Token bind route.
 	r.Post("/token/bind", bindHandler.Bind)
+
+	// MCP server route.
+	mcpTokenExtractor := mcp.NewTokenExtractorAdapter(
+		keyLookup,
+		&store.TokenSessionReader{Store: dbStore},
+		issuer.Config().Issuer,
+		issuer.Config().Audience,
+	)
+	mcpToolProvider := mcp.NewDBToolProvider(db)
+	mcpHandler := mcp.NewHandler(mcpTokenExtractor, mcpToolProvider, nil)
+	r.Post("/mcp", mcpHandler.ServeHTTP)
 
 	// Protected resource route (token-validated).
 	r.Get("/resource", tokenValidator.Middleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

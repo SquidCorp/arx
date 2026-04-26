@@ -1,3 +1,4 @@
+// Package main provides a utility for parsing test tokens.
 package main
 
 import (

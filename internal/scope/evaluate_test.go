@@ -166,4 +166,13 @@ func TestConstraintViolationDetails(t *testing.T) {
 	if violation.Limit != "100" {
 		t.Errorf("limit = %q, want %q", violation.Limit, "100")
 	}
+
+	// Verify Error() output format.
+	errMsg := violation.Error()
+	if errMsg == "" {
+		t.Error("expected non-empty error message")
+	}
+	if !errors.Is(violation, scope.ErrConstraintViolation) {
+		t.Error("expected Unwrap to return ErrConstraintViolation")
+	}
 }

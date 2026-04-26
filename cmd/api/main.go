@@ -69,7 +69,7 @@ func serve(cfg *config.Config) error {
 	if err != nil {
 		return fmt.Errorf("connect to redis: %w", err)
 	}
-	defer cacheClient.Close()
+	defer func() { _ = cacheClient.Close() }()
 
 	issuer := token.NewIssuer(token.DefaultConfig(cfg.Issuer), keyManager)
 

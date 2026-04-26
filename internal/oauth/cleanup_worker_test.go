@@ -21,5 +21,12 @@ func TestCleanupArgs_InsertOpts(t *testing.T) {
 	}
 }
 
+func TestNewCleanupWorker(t *testing.T) {
+	w := NewCleanupWorker(nil)
+	if w == nil {
+		t.Fatal("expected non-nil worker")
+	}
+}
+
 // Verify CleanupWorker satisfies the river.Worker interface at compile time.
 var _ river.Worker[CleanupArgs] = (*CleanupWorker)(nil)

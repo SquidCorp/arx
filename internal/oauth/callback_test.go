@@ -123,3 +123,58 @@ func TestCallback_FlowNotFound(t *testing.T) {
 	}
 	assertErrorCode(t, rec, "flow_not_found")
 }
+
+func TestCallback_FlowConsumed(t *testing.T) {
+	flowStore := newMockFlowStore()
+	flowStore.flows["flow-consumed"] = &PendingFlow{
+		UUID:      "flow-consumed",
+		Status:    "consumed",
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+	}
+
+	issuer := token.NewIssuer(token.Config{Issuer: "http://localhost:8080", Audience: "arx"}, nil)
+	h := NewHandler(flowStore, nil, nil, nil, nil, issuer, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/oauth/callback?uuid=flow-consumed", nil)
+	rec := httptest.NewRecorder()
+
+	h.Callback(rec, req)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("expected 409, got %d: %s", rec.Code, rec.Body.String())
+	}
+	assertErrorCode(t, rec, "flow_already_consumed")
+}
+
+func TestCallback_FlowUnknownStatus(t *testing.T) {
+	flowStore := newMockFlowStore()
+	flowStore.flows["flow-unknown"] = &PendingFlow{
+		UUID:      "flow-unknown",
+		Status:    "something-else",
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+	}
+
+	issuer := token.NewIssuer(token.Config{Issuer: "http://localhost:8080", Audience: "arx"}, nil)
+	h := NewHandler(flowStore, nil, nil, nil, nil, issuer, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/oauth/callback?uuid=flow-unknown", nil)
+	rec := httptest.NewRecorder()
+
+	h.Callback(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	assertErrorCode(t, rec, "invalid_flow_status")
+}
+
+func TestNonceCheck_Nil(t *testing.T) {
+	issuer := token.NewIssuer(token.Config{Issuer: "http://localhost:8080", Audience: "arx"}, nil)
+	h := NewHandler(newMockFlowStore(), nil, nil, nil, nil, issuer, nil)
+
+	ctx := t.Context()
+	check := h.nonceCheck(ctx)
+	if check != nil {
+		t.Error("expected nil nonce checker when nonce store is nil")
+	}
+}

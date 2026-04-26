@@ -32,3 +32,17 @@ func TestStartNilPool(t *testing.T) {
 		t.Error("expected error when starting with nil pool")
 	}
 }
+
+func TestHealthWorker_Kind(t *testing.T) {
+	args := HealthArgs{}
+	if args.Kind() != "health_check" {
+		t.Errorf("expected health_check, got %q", args.Kind())
+	}
+}
+
+func TestHealthWorker_Work(t *testing.T) {
+	w := &HealthWorker{}
+	if err := w.Work(context.Background(), nil); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}

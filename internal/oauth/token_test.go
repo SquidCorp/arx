@@ -369,3 +369,103 @@ func TestToken_UnsupportedGrantType(t *testing.T) {
 	}
 	assertErrorCode(t, rec, "unsupported_grant_type")
 }
+
+func TestTokenAuthCode_MissingCode(t *testing.T) {
+	issuer := token.NewIssuer(token.Config{Issuer: "http://localhost:8080", Audience: "arx"}, nil)
+	h := NewHandler(nil, nil, nil, nil, nil, issuer, nil)
+
+	form := url.Values{}
+	form.Set("grant_type", "authorization_code")
+	form.Set("code_verifier", "verifier")
+
+	req := httptest.NewRequest(http.MethodPost, "/oauth/token", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+
+	h.Token(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+	assertErrorCode(t, rec, "missing_code")
+}
+
+func TestTokenAuthCode_MissingCodeVerifier(t *testing.T) {
+	issuer := token.NewIssuer(token.Config{Issuer: "http://localhost:8080", Audience: "arx"}, nil)
+	h := NewHandler(nil, nil, nil, nil, nil, issuer, nil)
+
+	form := url.Values{}
+	form.Set("grant_type", "authorization_code")
+	form.Set("code", "some-code")
+
+	req := httptest.NewRequest(http.MethodPost, "/oauth/token", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+
+	h.Token(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+	assertErrorCode(t, rec, "missing_code_verifier")
+}
+
+func TestTokenAuthCode_MissingDPoP(t *testing.T) {
+	issuer := token.NewIssuer(token.Config{Issuer: "http://localhost:8080", Audience: "arx"}, nil)
+	h := NewHandler(nil, nil, nil, nil, nil, issuer, nil)
+
+	form := url.Values{}
+	form.Set("grant_type", "authorization_code")
+	form.Set("code", "some-code")
+	form.Set("code_verifier", "verifier")
+
+	req := httptest.NewRequest(http.MethodPost, "/oauth/token", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+
+	h.Token(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+	assertErrorCode(t, rec, "missing_dpop_proof")
+}
+
+func TestTokenRefresh_InvalidToken(t *testing.T) {
+	issuer := token.NewIssuer(token.Config{Issuer: "http://localhost:8080", Audience: "arx"}, nil)
+	h := NewHandler(nil, nil, nil, nil, nil, issuer, nil)
+
+	form := url.Values{}
+	form.Set("grant_type", "refresh_token")
+	form.Set("refresh_token", "not-a-jwt")
+
+	req := httptest.NewRequest(http.MethodPost, "/oauth/token", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+
+	h.Token(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+	assertErrorCode(t, rec, "invalid_grant")
+}
+
+func TestTokenRefresh_MissingToken(t *testing.T) {
+	issuer := token.NewIssuer(token.Config{Issuer: "http://localhost:8080", Audience: "arx"}, nil)
+	h := NewHandler(nil, nil, nil, nil, nil, issuer, nil)
+
+	form := url.Values{}
+	form.Set("grant_type", "refresh_token")
+
+	req := httptest.NewRequest(http.MethodPost, "/oauth/token", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+
+	h.Token(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+	assertErrorCode(t, rec, "missing_refresh_token")
+}

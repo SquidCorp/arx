@@ -277,3 +277,62 @@ func TestParseRefreshToken_Expired(t *testing.T) {
 		t.Error("expected error for expired refresh token")
 	}
 }
+
+func TestConfig(t *testing.T) {
+	km := testKeyManager(t)
+	cfg := DefaultConfig("https://arx.example.com")
+	issuer := NewIssuer(cfg, km)
+
+	got := issuer.Config()
+	if got.Issuer != "https://arx.example.com" {
+		t.Errorf("Issuer = %q, want %q", got.Issuer, "https://arx.example.com")
+	}
+	if got.Audience != "arx" {
+		t.Errorf("Audience = %q, want %q", got.Audience, "arx")
+	}
+}
+
+func TestParseRefreshTokenUnverified(t *testing.T) {
+	km := testKeyManager(t)
+	keys := testTenantKeys(t, km)
+	issuer := NewIssuer(DefaultConfig("https://arx.example.com"), km)
+
+	ctx := t.Context()
+	tokenStr, err := issuer.IssueRefreshToken(ctx, keys, "sess-123", "tenant-456", time.Now().Add(24*time.Hour))
+	if err != nil {
+		t.Fatalf("issue refresh token: %v", err)
+	}
+
+	claims, err := ParseRefreshTokenUnverified(tokenStr)
+	if err != nil {
+		t.Fatalf("parse unverified: %v", err)
+	}
+	if claims.SessionID != "sess-123" {
+		t.Errorf("sid = %q, want %q", claims.SessionID, "sess-123")
+	}
+	if claims.Tenant != "tenant-456" {
+		t.Errorf("tenant = %q, want %q", claims.Tenant, "tenant-456")
+	}
+}
+
+func TestParseRefreshTokenUnverified_Invalid(t *testing.T) {
+	_, err := ParseRefreshTokenUnverified("not-a-jwt")
+	if err == nil {
+		t.Error("expected error for invalid token")
+	}
+}
+
+func TestParseAccessToken_InvalidSigningMethod(t *testing.T) {
+	// Create a token with HMAC instead of EdDSA.
+	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"iss": "arx",
+		"sub": "sess-1",
+		"exp": time.Now().Add(time.Hour).Unix(),
+	})
+	tokenStr, _ := tok.SignedString([]byte("secret"))
+
+	_, err := ParseAccessToken(tokenStr, make([]byte, 32))
+	if err == nil {
+		t.Error("expected error for wrong signing method")
+	}
+}
