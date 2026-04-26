@@ -11,7 +11,7 @@ import (
 
 func TestHealth(t *testing.T) {
 	r := chi.NewRouter()
-	Register(r, nil, nil)
+	Register(r, nil, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
