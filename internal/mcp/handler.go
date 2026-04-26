@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/fambr/arx/internal/proxy"
 	"github.com/fambr/arx/internal/scope"
 )
 
@@ -17,6 +18,7 @@ var ErrNoToken = errors.New("authentication_required")
 type TokenInfo struct {
 	SessionID string
 	TenantID  string
+	UserID    string
 	Scopes    []string
 	ExpiresAt time.Time
 	Status    string
@@ -347,7 +349,18 @@ func (h *Handler) execCallTool(r *http.Request, req *Request, params CallToolPar
 		return toolResult(req.ID, string(text), false)
 	}
 
-	result, err := h.toolCaller.CallTool(r.Context(), info.TenantID, args.Name, args.Params, r)
+	// Inject session context for upstream header injection.
+	userID := info.UserID
+	if userID == "" {
+		userID = "anonymous"
+	}
+	ctx := proxy.WithSessionContext(r.Context(), &proxy.SessionContext{
+		SessionID: info.SessionID,
+		UserID:    userID,
+		Scopes:    info.Scopes,
+	})
+
+	result, err := h.toolCaller.CallTool(ctx, info.TenantID, args.Name, args.Params, r)
 	if err != nil {
 		return Response{
 			JSONRPC: jsonRPCVersion,

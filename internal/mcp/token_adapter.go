@@ -104,6 +104,7 @@ func (a *TokenExtractorAdapter) ExtractToken(r *http.Request) (*TokenInfo, error
 	return &TokenInfo{
 		SessionID: sess.ID,
 		TenantID:  sess.TenantID,
+		UserID:    sess.UserID,
 		Scopes:    sess.Scopes,
 		ExpiresAt: sess.ExpiresAt,
 		Status:    string(sess.Status),

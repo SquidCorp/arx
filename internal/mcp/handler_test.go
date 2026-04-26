@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/fambr/arx/internal/mcp"
+	"github.com/fambr/arx/internal/proxy"
 	"github.com/fambr/arx/internal/scope"
 )
 
@@ -1057,12 +1058,116 @@ func TestHandler_ToolsCall_ListTools_EmptyResult(t *testing.T) {
 	}
 }
 
+func TestHandler_ToolsCall_CallTool_SessionContextInjected(t *testing.T) {
+	t.Parallel()
+
+	tools := []scope.Tool{
+		{Name: "add-to-cart", CatalogType: "cart.add", RequiredScopes: []string{"cart:write"}},
+	}
+	caller := &capturingToolCaller{
+		result: map[string]string{"status": "ok"},
+	}
+	h := mcp.NewHandler(
+		&stubTokenExtractor{
+			sessionID: "sess-ctx-1",
+			tenantID:  "tenant-1",
+			userID:    "user-42",
+			scopes:    []string{"cart:write"},
+		},
+		&stubToolProvider{tools: tools},
+		caller,
+	)
+
+	body := jsonRPCRequest(t, 1, "tools/call", map[string]any{
+		"name": "call_tool",
+		"arguments": map[string]any{
+			"name":   "add-to-cart",
+			"params": map[string]any{"product_id": "abc", "quantity": 1},
+		},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/mcp", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("DPoP", "dummy-proof")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	resp := parseResponse(t, rec.Body)
+	if resp.Error != nil {
+		t.Fatalf("unexpected error: %+v", resp.Error)
+	}
+
+	// Verify session context was injected into the context passed to CallTool.
+	sc := caller.capturedSessionCtx
+	if sc == nil {
+		t.Fatal("expected session context in context passed to tool caller")
+	}
+	if sc.SessionID != "sess-ctx-1" {
+		t.Errorf("SessionID = %q, want %q", sc.SessionID, "sess-ctx-1")
+	}
+	if sc.UserID != "user-42" {
+		t.Errorf("UserID = %q, want %q", sc.UserID, "user-42")
+	}
+	if len(sc.Scopes) != 1 || sc.Scopes[0] != "cart:write" {
+		t.Errorf("Scopes = %v, want [cart:write]", sc.Scopes)
+	}
+}
+
+func TestHandler_ToolsCall_CallTool_AnonymousUserContext(t *testing.T) {
+	t.Parallel()
+
+	tools := []scope.Tool{
+		{Name: "add-to-cart", CatalogType: "cart.add", RequiredScopes: []string{"cart:write"}},
+	}
+	caller := &capturingToolCaller{
+		result: map[string]string{"status": "ok"},
+	}
+	h := mcp.NewHandler(
+		&stubTokenExtractor{
+			sessionID: "sess-anon",
+			tenantID:  "tenant-1",
+			userID:    "", // empty → should become "anonymous"
+			scopes:    []string{"cart:write"},
+		},
+		&stubToolProvider{tools: tools},
+		caller,
+	)
+
+	body := jsonRPCRequest(t, 1, "tools/call", map[string]any{
+		"name": "call_tool",
+		"arguments": map[string]any{
+			"name":   "add-to-cart",
+			"params": map[string]any{"product_id": "abc", "quantity": 1},
+		},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/mcp", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("DPoP", "dummy-proof")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	resp := parseResponse(t, rec.Body)
+	if resp.Error != nil {
+		t.Fatalf("unexpected error: %+v", resp.Error)
+	}
+
+	sc := caller.capturedSessionCtx
+	if sc == nil {
+		t.Fatal("expected session context in context passed to tool caller")
+	}
+	if sc.UserID != "anonymous" {
+		t.Errorf("UserID = %q, want %q", sc.UserID, "anonymous")
+	}
+}
+
 // --- Test stubs ---
 
 // stubTokenExtractor implements mcp.TokenExtractor for testing.
 type stubTokenExtractor struct {
 	sessionID string
 	tenantID  string
+	userID    string
 	scopes    []string
 	expiresAt time.Time
 	status    string
@@ -1076,6 +1181,7 @@ func (s *stubTokenExtractor) ExtractToken(_ *http.Request) (*mcp.TokenInfo, erro
 	return &mcp.TokenInfo{
 		SessionID: s.sessionID,
 		TenantID:  s.tenantID,
+		UserID:    s.userID,
 		Scopes:    s.scopes,
 		ExpiresAt: s.expiresAt,
 		Status:    s.status,
@@ -1107,4 +1213,15 @@ func (s *stubToolCaller) CallTool(_ context.Context, _, _ string, _ map[string]a
 		return nil, s.err
 	}
 	return s.result, nil
+}
+
+// capturingToolCaller captures the session context from the context passed to CallTool.
+type capturingToolCaller struct {
+	result             any
+	capturedSessionCtx *proxy.SessionContext
+}
+
+func (c *capturingToolCaller) CallTool(ctx context.Context, _, _ string, _ map[string]any, _ *http.Request) (any, error) {
+	c.capturedSessionCtx = proxy.SessionContextFrom(ctx)
+	return c.result, nil
 }

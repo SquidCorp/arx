@@ -33,6 +33,7 @@ type SessionReader interface {
 type SessionInfo struct {
 	ID        string
 	TenantID  string
+	UserID    string
 	Status    session.Status
 	Scopes    []string
 	ExpiresAt time.Time

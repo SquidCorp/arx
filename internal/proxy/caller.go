@@ -267,6 +267,9 @@ func (c *Caller) CallTool(
 		return nil, fmt.Errorf("proxy: build request: %w", err)
 	}
 
+	// Inject session context headers if present.
+	injectSessionHeaders(ctx, req)
+
 	// Sign outbound request if a signer is configured.
 	if c.signer != nil {
 		if err := signRequest(ctx, c.signer, tenantID, req, c.now); err != nil {

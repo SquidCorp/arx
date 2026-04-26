@@ -207,9 +207,9 @@ func (s *Store) GetSessionInfo(ctx context.Context, id string) (*token.SessionIn
 	var sess token.SessionInfo
 	var status string
 	err := s.pool.QueryRow(ctx, `
-		SELECT id::text, tenant_id::text, status, scopes, expires_at
+		SELECT id::text, tenant_id::text, user_id, status, scopes, expires_at
 		FROM sessions WHERE id = $1
-	`, id).Scan(&sess.ID, &sess.TenantID, &status, &sess.Scopes, &sess.ExpiresAt)
+	`, id).Scan(&sess.ID, &sess.TenantID, &sess.UserID, &status, &sess.Scopes, &sess.ExpiresAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, errors.New("session not found")
