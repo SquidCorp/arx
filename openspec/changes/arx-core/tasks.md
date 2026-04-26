@@ -73,8 +73,8 @@
 
 ## 9. Reverse Proxy
 
-- [ ] 9.1 Implement parameter mapping engine — transform standard catalog params to merchant field paths (body.x, query.x)
-- [ ] 9.2 Implement outbound HTTP client with per-tool configurable timeout and circuit breaker
+- [x] 9.1 Implement parameter mapping engine — transform standard catalog params to merchant field paths (body.x, query.x)
+- [x] 9.2 Implement outbound HTTP client with per-tool configurable timeout and circuit breaker
 - [ ] 9.3 Implement Ed25519 request signing on outbound proxied requests (X-Arx-Signature, X-Arx-Timestamp)
 - [ ] 9.4 Implement session context headers injection (X-Arx-Session, X-Arx-User, X-Arx-Scopes)
 - [ ] 9.5 Implement upstream response handling — forward 2xx/4xx responses, mask 5xx errors, handle timeouts
