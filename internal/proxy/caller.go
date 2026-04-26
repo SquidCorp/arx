@@ -132,6 +132,8 @@ type callerOptions struct {
 	cbThreshold    int
 	cbResetTimeout time.Duration
 	httpClient     *http.Client
+	signer         RequestSigner
+	now            func() time.Time
 }
 
 // WithCBThreshold sets the number of consecutive failures before a tool's
@@ -159,16 +161,34 @@ func WithHTTPClient(c *http.Client) Option {
 	}
 }
 
+// WithSigner enables Ed25519 request signing on outbound proxied requests.
+// When set, every upstream request includes X-Arx-Signature, X-Arx-Timestamp,
+// and X-Arx-Nonce headers.
+func WithSigner(s RequestSigner) Option {
+	return func(o *callerOptions) {
+		o.signer = s
+	}
+}
+
+// WithNow overrides the clock used for request timestamps. Useful for testing.
+func WithNow(fn func() time.Time) Option {
+	return func(o *callerOptions) {
+		o.now = fn
+	}
+}
+
 // --- Caller ---
 
 // Caller proxies tool calls to merchant upstream endpoints. It resolves tool
-// configuration, maps parameters, enforces per-tool timeouts, and protects
-// each tool with an independent circuit breaker.
+// configuration, maps parameters, enforces per-tool timeouts, signs outbound
+// requests, and protects each tool with an independent circuit breaker.
 type Caller struct {
 	resolver       ToolDataResolver
 	client         *http.Client
 	cbThreshold    int
 	cbResetTimeout time.Duration
+	signer         RequestSigner
+	now            func() time.Time
 
 	mu       sync.Mutex
 	breakers map[string]*circuitBreaker
@@ -185,11 +205,18 @@ func NewCaller(resolver ToolDataResolver, opts ...Option) *Caller {
 		opt(o)
 	}
 
+	now := o.now
+	if now == nil {
+		now = time.Now
+	}
+
 	return &Caller{
 		resolver:       resolver,
 		client:         o.httpClient,
 		cbThreshold:    o.cbThreshold,
 		cbResetTimeout: o.cbResetTimeout,
+		signer:         o.signer,
+		now:            now,
 		breakers:       make(map[string]*circuitBreaker),
 	}
 }
@@ -238,6 +265,13 @@ func (c *Caller) CallTool(
 	req, err := c.buildRequest(ctx, td, mapped)
 	if err != nil {
 		return nil, fmt.Errorf("proxy: build request: %w", err)
+	}
+
+	// Sign outbound request if a signer is configured.
+	if c.signer != nil {
+		if err := signRequest(ctx, c.signer, tenantID, req, c.now); err != nil {
+			return nil, fmt.Errorf("proxy: %w", err)
+		}
 	}
 
 	// Apply per-tool timeout.
