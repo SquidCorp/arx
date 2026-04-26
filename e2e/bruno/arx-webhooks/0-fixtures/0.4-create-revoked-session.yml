@@ -1,0 +1,25 @@
+info:
+  name: "0.4 Fixture — create revoked session"
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/internal/test/sessions"
+  body:
+    type: json
+    data: |-
+      {"tenantId":"{{TENANT_ID}}","status":"revoked","scopes":["cart.view"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status === 201) {
+          bru.setVar("revokedSessionId", res.body.sessionId);
+        }
+    - type: tests
+      code: |-
+        test("fixture: should create revoked session", function() {
+          expect(res.status).to.equal(201);
+        });

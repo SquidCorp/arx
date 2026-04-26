@@ -97,6 +97,7 @@ func run() error {
 	merchantSeed := merchantPriv.Seed()
 	arxSeed := arxPriv.Seed()
 	fmt.Println("# Paste into e2e/bruno/arx-webhooks/.env")
+	fmt.Printf("ARX_MASTER_KEY=%s\n", masterKeyHex)
 	fmt.Printf("BASE_URL=http://localhost:8080\n")
 	fmt.Printf("TENANT_ID=%s\n", tenantID)
 	fmt.Printf("MERCHANT_PRIVATE_KEY=%s\n", hex.EncodeToString(merchantSeed))

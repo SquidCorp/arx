@@ -174,7 +174,6 @@ func (sv *SignatureValidator) Middleware(next http.Handler) http.Handler {
 			Nonce:     nonce,
 		}
 
-
 		if err := sv.keyManager.VerifyWebhook(r.Context(), keys, payload, sig); err != nil {
 			writeError(w, http.StatusUnauthorized, "invalid_signature")
 			return

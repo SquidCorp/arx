@@ -15,6 +15,7 @@ type Config struct {
 	DatabaseURL string `koanf:"database_url"`
 	RedisURL    string `koanf:"redis_url"`
 	Issuer      string `koanf:"issuer"`
+	TestMode    bool   `koanf:"test_mode"`
 }
 
 // Load reads configuration from config.yaml and environment variables (APP_ prefix).

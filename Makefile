@@ -49,6 +49,10 @@ dev:
 	@docker compose exec db sh -c 'until pg_isready -U postgres; do sleep 1; done' >/dev/null 2>&1
 	@$(MAKE) migrate
 	@echo "🔥 Starting app with hot-reload..."
+	@if [ -z "$$ARX_MASTER_KEY" ] && [ -f e2e/bruno/arx-webhooks/.env ]; then \
+		echo "📎 Loading ARX_MASTER_KEY from e2e .env..."; \
+		export $$(grep '^ARX_MASTER_KEY=' e2e/bruno/arx-webhooks/.env); \
+	fi && \
 	go run github.com/air-verse/air@latest -c .air.toml
 
 dev-down:

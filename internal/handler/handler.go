@@ -9,6 +9,7 @@ import (
 	"github.com/fambr/arx/internal/cache"
 	"github.com/fambr/arx/internal/crypto"
 	"github.com/fambr/arx/internal/store"
+	"github.com/fambr/arx/internal/testapi"
 	"github.com/fambr/arx/internal/token"
 	"github.com/fambr/arx/internal/webhook"
 	"github.com/go-chi/chi/v5"
@@ -23,7 +24,8 @@ type Handler struct {
 	river *river.Client[pgx.Tx]
 }
 
-// Register mounts all HTTP routes on the given router.
+// Register mounts all HTTP routes on the given router. When testMode is true,
+// additional internal endpoints are registered for e2e test fixture management.
 func Register(
 	r chi.Router,
 	db *pgxpool.Pool,
@@ -31,6 +33,7 @@ func Register(
 	cacheClient *cache.Client,
 	keyManager crypto.KeyManager,
 	issuer *token.Issuer,
+	testMode bool,
 ) {
 	h := &Handler{db: db, river: riverClient}
 
@@ -79,6 +82,13 @@ func Register(
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})).ServeHTTP)
+
+	// Test-only routes for e2e fixture management.
+	if testMode {
+		testHandler := testapi.NewHandler(dbStore)
+		r.Post("/internal/test/sessions", testHandler.CreateFixtureSession)
+		r.Patch("/internal/test/sessions/{id}", testHandler.UpdateSession)
+	}
 }
 
 // Health returns the service health status.

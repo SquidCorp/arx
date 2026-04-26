@@ -42,10 +42,6 @@ runtime:
         req.setHeader('X-Arx-Signature', signatureB64);
         req.setHeader('X-Arx-Timestamp', timestamp);
         req.setHeader('X-Arx-Nonce', nonce);
-        // This test requires a session with refresh_count >= 5.
-        // The 4.10 test creates this session. Run folder in order.
-        // If running standalone, seed a session with refresh_count=5 via SQL:
-        //   UPDATE sessions SET refresh_count = 5 WHERE id = '<session_id>';
 
     - type: tests
       code: |-

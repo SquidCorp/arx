@@ -1,0 +1,20 @@
+info:
+  name: "6.0.5 Setup — suspend session for resume tests"
+  type: http
+  seq: 2
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/internal/test/sessions/{{resumeSessionId}}"
+  body:
+    type: json
+    data: |-
+      {"status":"suspended"}
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("setup: should suspend session", function() {
+          expect(res.status).to.equal(200);
+        });

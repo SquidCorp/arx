@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewRouter(t *testing.T) {
-	r := newRouter(nil, nil, nil, nil, nil)
+	r := newRouter(nil, nil, nil, nil, nil, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()

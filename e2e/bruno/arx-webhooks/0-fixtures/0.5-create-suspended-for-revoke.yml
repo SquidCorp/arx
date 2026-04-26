@@ -1,0 +1,25 @@
+info:
+  name: "0.5 Fixture — create suspended session for revoke tests"
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/internal/test/sessions"
+  body:
+    type: json
+    data: |-
+      {"tenantId":"{{TENANT_ID}}","status":"suspended","scopes":["cart.view"],"expiresIn":3600}
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status === 201) {
+          bru.setVar("suspendedForRevokeId", res.body.sessionId);
+        }
+    - type: tests
+      code: |-
+        test("fixture: should create suspended-for-revoke session", function() {
+          expect(res.status).to.equal(201);
+        });

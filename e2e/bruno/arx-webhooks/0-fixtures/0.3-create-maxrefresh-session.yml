@@ -1,0 +1,25 @@
+info:
+  name: "0.3 Fixture — create max-refresh session"
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/internal/test/sessions"
+  body:
+    type: json
+    data: |-
+      {"tenantId":"{{TENANT_ID}}","status":"active","scopes":["cart.view"],"expiresIn":3600,"refreshCount":5}
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status === 201) {
+          bru.setVar("maxRefreshSessionId", res.body.sessionId);
+        }
+    - type: tests
+      code: |-
+        test("fixture: should create max-refresh session", function() {
+          expect(res.status).to.equal(201);
+        });

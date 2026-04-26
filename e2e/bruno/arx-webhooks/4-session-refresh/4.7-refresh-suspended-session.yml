@@ -42,8 +42,6 @@ runtime:
         req.setHeader('X-Arx-Signature', signatureB64);
         req.setHeader('X-Arx-Timestamp', timestamp);
         req.setHeader('X-Arx-Nonce', nonce);
-        // Requires a suspended session. Set via SQL:
-        //   UPDATE sessions SET status = 'suspended' WHERE id = '<session_id>';
 
     - type: tests
       code: |-

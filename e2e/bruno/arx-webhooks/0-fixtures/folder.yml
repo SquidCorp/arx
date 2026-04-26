@@ -1,0 +1,3 @@
+info:
+  name: 0 - Fixtures
+  description: Creates fixture sessions in specific states for cross-suite tests.

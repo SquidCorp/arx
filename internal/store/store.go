@@ -100,6 +100,20 @@ func (s *Store) RefreshSession(ctx context.Context, id string, expiresAt time.Ti
 	return nil
 }
 
+// SetRefreshCount sets a session's refresh_count to the given value.
+func (s *Store) SetRefreshCount(ctx context.Context, id string, count int) error {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE sessions SET refresh_count = $1, updated_at = NOW() WHERE id = $2
+	`, count, id)
+	if err != nil {
+		return fmt.Errorf("set refresh count: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return webhook.ErrSessionNotFound
+	}
+	return nil
+}
+
 // GetTenant retrieves a tenant's session policy.
 func (s *Store) GetTenant(ctx context.Context, tenantID string) (*webhook.TenantRecord, error) {
 	var rec webhook.TenantRecord
@@ -244,7 +258,9 @@ func (t *TokenSessionReader) GetSession(ctx context.Context, id string) (*token.
 }
 
 // Ensure compile-time interface satisfaction.
-var _ webhook.SessionStore = (*Store)(nil)
-var _ webhook.OAuthFlowLinker = (*Store)(nil)
-var _ token.BindSessionStore = (*Store)(nil)
-var _ token.SessionReader = (*TokenSessionReader)(nil)
+var (
+	_ webhook.SessionStore    = (*Store)(nil)
+	_ webhook.OAuthFlowLinker = (*Store)(nil)
+	_ token.BindSessionStore  = (*Store)(nil)
+	_ token.SessionReader     = (*TokenSessionReader)(nil)
+)

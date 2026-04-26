@@ -73,7 +73,7 @@ func serve(cfg *config.Config) error {
 
 	issuer := token.NewIssuer(token.DefaultConfig(cfg.Issuer), keyManager)
 
-	r := newRouter(pool, riverClient, cacheClient, keyManager, issuer)
+	r := newRouter(pool, riverClient, cacheClient, keyManager, issuer, cfg.TestMode)
 	srv := newServer(cfg.Port, r)
 
 	go func() {
@@ -108,6 +108,7 @@ func newRouter(
 	cacheClient *cache.Client,
 	keyManager crypto.KeyManager,
 	issuer *token.Issuer,
+	testMode bool,
 ) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -115,7 +116,7 @@ func newRouter(
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
 
-	handler.Register(r, db, riverClient, cacheClient, keyManager, issuer)
+	handler.Register(r, db, riverClient, cacheClient, keyManager, issuer, testMode)
 	return r
 }
 

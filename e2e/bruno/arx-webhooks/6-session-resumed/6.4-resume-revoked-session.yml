@@ -1,7 +1,7 @@
 info:
   name: "6.4 Resume revoked session"
   type: http
-  seq: 4
+  seq: 5
 
 http:
   method: POST
@@ -42,7 +42,6 @@ runtime:
         req.setHeader('X-Arx-Signature', signatureB64);
         req.setHeader('X-Arx-Timestamp', timestamp);
         req.setHeader('X-Arx-Nonce', nonce);
-        // Requires a revoked session. Set via SQL or use one from a previous test.
 
     - type: tests
       code: |-

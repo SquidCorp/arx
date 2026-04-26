@@ -1,7 +1,7 @@
 info:
   name: "6.5 Resume expired session"
   type: http
-  seq: 5
+  seq: 6
 
 http:
   method: POST
@@ -42,8 +42,6 @@ runtime:
         req.setHeader('X-Arx-Signature', signatureB64);
         req.setHeader('X-Arx-Timestamp', timestamp);
         req.setHeader('X-Arx-Nonce', nonce);
-        // Requires an expired session. Set via SQL:
-        //   UPDATE sessions SET status = 'expired' WHERE id = '<session_id>';
 
     - type: tests
       code: |-

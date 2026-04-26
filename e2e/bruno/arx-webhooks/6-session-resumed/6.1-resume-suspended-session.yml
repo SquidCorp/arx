@@ -1,7 +1,7 @@
 info:
   name: "6.1 Resume suspended session"
   type: http
-  seq: 2
+  seq: 3
 
 http:
   method: POST
@@ -42,9 +42,6 @@ runtime:
         req.setHeader('X-Arx-Signature', signatureB64);
         req.setHeader('X-Arx-Timestamp', timestamp);
         req.setHeader('X-Arx-Nonce', nonce);
-        // Requires the session from 6.0 to be in 'suspended' status.
-        // Run this SQL before executing:
-        //   UPDATE sessions SET status = 'suspended' WHERE id = '<resumeSessionId>';
 
     - type: tests
       code: |-
