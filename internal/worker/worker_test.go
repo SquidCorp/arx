@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewConfig(t *testing.T) {
-	cfg, workers := NewConfig()
+	cfg, workers := NewConfig(nil)
 
 	if cfg == nil {
 		t.Fatal("expected non-nil config")

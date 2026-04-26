@@ -4,7 +4,9 @@ package worker
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/fambr/arx/internal/oauth"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
@@ -31,16 +33,26 @@ func (w *HealthWorker) Work(_ context.Context, _ *river.Job[HealthArgs]) error {
 }
 
 // NewConfig builds the River client configuration with default queue settings.
-func NewConfig() (*river.Config, *river.Workers) {
+func NewConfig(pool *pgxpool.Pool) (*river.Config, *river.Workers) {
 	workers := river.NewWorkers()
 
 	river.AddWorker(workers, &HealthWorker{})
+	river.AddWorker(workers, oauth.NewCleanupWorker(pool))
 
 	cfg := &river.Config{
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault: {MaxWorkers: 10},
 		},
 		Workers: workers,
+		PeriodicJobs: []*river.PeriodicJob{
+			river.NewPeriodicJob(
+				river.PeriodicInterval(5*time.Minute),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return oauth.CleanupArgs{}, nil
+				},
+				&river.PeriodicJobOpts{RunOnStart: true},
+			),
+		},
 	}
 
 	return cfg, workers
@@ -64,7 +76,7 @@ func Start(ctx context.Context, pool *pgxpool.Pool) (*river.Client[pgx.Tx], erro
 		return nil, fmt.Errorf("run river migrations: %w", err)
 	}
 
-	cfg, _ := NewConfig()
+	cfg, _ := NewConfig(pool)
 
 	riverClient, err := river.NewClient(driver, cfg)
 	if err != nil {

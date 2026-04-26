@@ -6,11 +6,13 @@ import (
 	"testing"
 
 	"github.com/fambr/arx/internal/config"
+	"github.com/fambr/arx/internal/token"
 	"github.com/rs/zerolog"
 )
 
 func TestNewRouter(t *testing.T) {
-	r := newRouter(nil, nil, nil, nil, nil, false)
+	issuer := token.NewIssuer(token.DefaultConfig("http://localhost:8080"), nil)
+	r := newRouter(nil, nil, nil, nil, issuer, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()

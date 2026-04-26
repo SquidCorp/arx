@@ -178,6 +178,22 @@ func ParseAccessToken(tokenString string, publicKey []byte) (*AccessTokenClaims,
 	return claims, nil
 }
 
+// ParseRefreshTokenUnverified parses a refresh token without signature verification.
+// Used to extract the tenant ID before looking up signing keys.
+func ParseRefreshTokenUnverified(tokenString string) (*RefreshTokenClaims, error) {
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, &RefreshTokenClaims{})
+	if err != nil {
+		return nil, fmt.Errorf("parse refresh token unverified: %w", err)
+	}
+
+	claims, ok := token.Claims.(*RefreshTokenClaims)
+	if !ok {
+		return nil, fmt.Errorf("invalid refresh token claims")
+	}
+
+	return claims, nil
+}
+
 // ParseRefreshToken parses and validates a refresh token JWT.
 // It verifies the signature using the provided Ed25519 public key.
 func ParseRefreshToken(tokenString string, publicKey []byte) (*RefreshTokenClaims, error) {

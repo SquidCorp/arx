@@ -8,6 +8,7 @@ import (
 
 	"github.com/fambr/arx/internal/cache"
 	"github.com/fambr/arx/internal/crypto"
+	"github.com/fambr/arx/internal/oauth"
 	"github.com/fambr/arx/internal/store"
 	"github.com/fambr/arx/internal/testapi"
 	"github.com/fambr/arx/internal/token"
@@ -65,6 +66,21 @@ func Register(
 		},
 	)
 
+	// OAuth 2.1 handler.
+	var oauthCache *cache.OAuthCache
+	if cacheClient != nil {
+		oauthCache = cache.NewOAuthCache(cacheClient)
+	}
+	oauthHandler := oauth.NewHandler(
+		&store.OAuthFlowStore{Store: dbStore},
+		&store.OAuthSessionStore{Store: dbStore},
+		oauthCache,
+		sessionCache,
+		keyLookup,
+		issuer,
+		nonceStore,
+	)
+
 	// Health check.
 	r.Get("/health", h.Health)
 
@@ -73,6 +89,12 @@ func Register(
 	r.With(sigValidator.Middleware).Post("/webhook/session-refresh", webhookHandler.SessionRefresh)
 	r.With(sigValidator.Middleware).Post("/webhook/session-revoked", webhookHandler.SessionRevoked)
 	r.With(sigValidator.Middleware).Post("/webhook/session-resumed", webhookHandler.SessionResumed)
+
+	// OAuth 2.1 routes.
+	r.Get("/.well-known/oauth-authorization-server", oauthHandler.Metadata)
+	r.Get("/oauth/authorize", oauthHandler.Authorize)
+	r.Post("/oauth/token", oauthHandler.Token)
+	r.Get("/oauth/callback", oauthHandler.Callback)
 
 	// Token bind route.
 	r.Post("/token/bind", bindHandler.Bind)

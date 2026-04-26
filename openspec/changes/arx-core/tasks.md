@@ -45,12 +45,12 @@
 
 ## 6. OAuth 2.1 Flow (Flow 1)
 
-- [ ] 6.1 Implement `GET /.well-known/oauth-authorization-server` — return metadata with endpoints, PKCE S256, DPoP algs
-- [ ] 6.2 Implement `GET /oauth/authorize` — validate redirect_uri against tenant config, generate uuid, create pending flow, redirect to merchant login URL
-- [ ] 6.3 Implement `POST /oauth/token` for `grant_type=authorization_code` — PKCE verification, DPoP binding, issue token + refresh token
-- [ ] 6.4 Implement `POST /oauth/token` for `grant_type=refresh_token` — validate refresh token, check session state, issue new tokens
-- [ ] 6.5 Implement `GET /oauth/callback` — match pending flow by uuid, redirect to LLM's redirect_uri with auth code + state
-- [ ] 6.6 Implement cleanup job (River worker) for expired oauth_pending_flows
+- [x] 6.1 Implement `GET /.well-known/oauth-authorization-server` — return metadata with endpoints, PKCE S256, DPoP algs
+- [x] 6.2 Implement `GET /oauth/authorize` — validate redirect_uri against tenant config, generate uuid, create pending flow, redirect to merchant login URL
+- [x] 6.3 Implement `POST /oauth/token` for `grant_type=authorization_code` — PKCE verification, DPoP binding, issue token + refresh token
+- [x] 6.4 Implement `POST /oauth/token` for `grant_type=refresh_token` — validate refresh token, check session state, issue new tokens
+- [x] 6.5 Implement `GET /oauth/callback` — match pending flow by uuid, redirect to LLM's redirect_uri with auth code + state
+- [x] 6.6 Implement cleanup job (River worker) for expired oauth_pending_flows
 
 ## 7. Scope Enforcement Engine
 

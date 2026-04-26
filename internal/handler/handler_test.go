@@ -6,12 +6,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/fambr/arx/internal/token"
 	"github.com/go-chi/chi/v5"
 )
 
 func TestHealth(t *testing.T) {
 	r := chi.NewRouter()
-	Register(r, nil, nil, nil, nil, nil, false)
+	issuer := token.NewIssuer(token.DefaultConfig("http://localhost:8080"), nil)
+	Register(r, nil, nil, nil, nil, issuer, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
